@@ -2254,11 +2254,14 @@ function getLogistics(){
 function saveLogistics(sections){lss(K.logistics,sections);}
 
 function renderLogistics(){
-  const sections=getLogistics();
   const container=document.getElementById('logistics-sections');
   if(!container)return;
+  // Never re-render while a logistics field is actively being edited —
+  // doing so would replace the DOM and lose whatever the user is typing.
+  const active=document.activeElement;
+  if(active && container.contains(active)) return;
+  const sections=getLogistics();
   container.innerHTML=sections.map(s=>logSectionHTML(s)).join('');
-  // Auto-resize all textareas
   container.querySelectorAll('.log-textarea').forEach(ta=>autoResize(ta));
 }
 
@@ -2270,8 +2273,8 @@ function logSectionHTML(s){
       <input class="log-title-input" type="text"
         value="${(s.title||'').replace(/"/g,'&quot;')}"
         placeholder="Section title…"
-        onchange="updateLogField(${s.id},'title',this.value)"
-        oninput="updateLogField(${s.id},'title',this.value)">
+        oninput="saveLogFieldLocal(${s.id},'title',this.value)"
+        onblur="saveLogFieldSync(${s.id},'title',this.value)">
       <div class="log-actions">
         <button class="log-del" onclick="deleteLogSection(${s.id})" title="Delete section">🗑</button>
       </div>
@@ -2285,7 +2288,8 @@ function logSectionHTML(s){
       <textarea class="log-textarea"
         id="log-ta-${s.id}"
         placeholder="Tap to add details…"
-        oninput="updateLogField(${s.id},'content',this.value);autoResize(this)"
+        oninput="saveLogFieldLocal(${s.id},'content',this.value);autoResize(this)"
+        onblur="saveLogFieldSync(${s.id},'content',this.value)"
       >${content}</textarea>
     </div>
   </div>`;
@@ -2302,6 +2306,23 @@ function updateLogField(id,field,val){
   if(!s)return;
   s[field]=val;
   saveLogistics(sections);
+}
+// Save to localStorage only (no Firebase push) — called on every keystroke
+function saveLogFieldLocal(id,field,val){
+  const sections=getLogistics();
+  const s=sections.find(x=>x.id===id);
+  if(!s)return;
+  s[field]=val;
+  // Write directly to localStorage without calling schedulePush
+  try{localStorage.setItem(K.logistics,JSON.stringify(sections));}catch(e){}
+}
+// Save + push to Firebase — called only when field loses focus
+function saveLogFieldSync(id,field,val){
+  const sections=getLogistics();
+  const s=sections.find(x=>x.id===id);
+  if(!s)return;
+  s[field]=val;
+  saveLogistics(sections); // this calls lss → schedulePush
 }
 
 function toggleIconPicker(id){
