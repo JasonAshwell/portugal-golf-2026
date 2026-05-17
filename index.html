@@ -1279,6 +1279,7 @@ function renderTeams(){
     const totalHcp=members.reduce((s,p)=>s+p.hcp,0);
     const totalEff=members.reduce((s,p)=>s+effHcp(p),0);
     const other=key==='A'?'B':'A';
+    const otherMembers=(teams[other]||[]).map(id=>pMap[id]).filter(Boolean);
     const rows=members.map(p=>{
       const profile=getProfile(p.id);
       let thumb;
@@ -1287,14 +1288,17 @@ function renderTeams(){
       } else {
         thumb=`<div class="t2photo-ph" style="background:${AVATARS[p.idx%AVATARS.length]}">${p.name.slice(0,2).toUpperCase()}</div>`;
       }
+      const swapOpts=otherMembers.map(op=>
+        `<option value="${op.id}">⇄ ${op.name}</option>`
+      ).join('');
       return`<div class="t2row">
         ${thumb}
         <div class="cbadge ${badgeClass(p.confidence||'medium')}"></div>
         <span class="t2name">${p.name}</span>
         <span class="t2info">HCP ${p.hcp} · Eff ${effHcp(p)}</span>
-        <select class="t2move" onchange="movePlayer(${p.id},'${other}',this)">
-          <option value="${key}" selected>${key==='A'?names.A:names.B}</option>
-          <option value="${other}">→ ${other==='A'?names.A:names.B}</option>
+        <select class="t2move" onchange="swapPlayers(${p.id},'${key}',parseInt(this.value));this.selectedIndex=0;">
+          <option value="">Swap…</option>
+          ${swapOpts}
         </select>
       </div>`;
     }).join('');
@@ -1319,14 +1323,19 @@ function updateTeamName(key,val){
   saveTeamNames(names);
 }
 
-function movePlayer(pid,toTeam,sel){
+function swapPlayers(pidA, teamA, pidB){
+  // pidA is in teamA, pidB is in the other team — swap them
   const teams=getTeams();if(!teams)return;
-  teams.A=teams.A.filter(id=>id!==pid);
-  teams.B=teams.B.filter(id=>id!==pid);
-  if(teams[toTeam].length<4){teams[toTeam].push(pid);}
-  else{toast('⚠️ That team already has 4 players');renderTeams();return;}
-  saveTeams(teams);renderTeams();
-  toast('Player moved ✅');
+  const teamB=teamA==='A'?'B':'A';
+  const iA=teams[teamA].indexOf(pidA);
+  const iB=teams[teamB].indexOf(pidB);
+  if(iA===-1||iB===-1){toast('⚠️ Could not find players');renderTeams();return;}
+  teams[teamA][iA]=pidB;
+  teams[teamB][iB]=pidA;
+  saveTeams(teams);
+  renderTeams();
+  renderPairingsPreview();
+  toast('Players swapped ✅');
 }
 
 // ═══════════════════════════════════════════════════
