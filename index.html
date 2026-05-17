@@ -796,74 +796,78 @@ const LOG_ICONS = ['✈️','🏨','🚗','🌙','🍽️','📋','⛳','🎉','
 let logNextId = 100;
 
 // ═══════════════════════════════════════════════════
-// GITHUB GIST SYNC  —  automatic cross-device sync
+// GITHUB SYNC — saves data.json directly to your repo
 // ─────────────────────────────────────────────────
-// One-time setup for Jason (5 mins):
-//
-//  STEP 1 — Create a storage gist
-//    • Go to https://gist.github.com
-//    • Filename: amd-golf-data.json   Content: {}
-//    • Click "Create secret gist"
-//    • Copy the ID from the URL — the long hash at the end:
-//        gist.github.com/JasonAshwell/←THIS_PART→
-//
-//  STEP 2 — Create a Personal Access Token
-//    • Go to https://github.com/settings/tokens
-//    • "Generate new token (classic)"
-//    • Note: "golf 2026"  |  Expiry: 90 days (or No expiration)
-//    • Tick ONE scope: ✅ gist
-//    • Generate — copy the token (starts with ghp_)
-//
-//  STEP 3 — Paste both values below, save & re-deploy to GitHub Pages
+// One-time setup (2 mins):
+//   1. Go to https://github.com/settings/tokens
+//   2. "Generate new token (classic)"
+//      Name: "golf 2026"  |  Scope: ✅ repo  |  Generate
+//   3. Copy the ghp_... token and paste below, then re-deploy
 // ═══════════════════════════════════════════════════
-const GIST_ID      = 'gist.github.com/JasonAshwell';   // ← e.g. 'a3f9c2b8e1d74056abc123...'
-const GITHUB_TOKEN = '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';   // ← e.g. 'ghp_xxxxxxxxxxxxxxxxxx'
+const GH_TOKEN = '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';           // ← paste your ghp_... token here
+const GH_OWNER = 'JasonAshwell';
+const GH_REPO  = 'portugal-golf-2026';
+const GH_FILE  = 'data.json';
 
-const GIST_FILE  = 'amd-golf-data.json';
-const SYNC_KEYS  = Object.values(K);
-const gistReady  = GIST_ID.length > 10 && GITHUB_TOKEN.length > 10;
-let   pushTimer  = null;
-let   lastEtag   = '';
+const SYNC_KEYS = Object.values(K);
+const ghReady   = GH_TOKEN.length > 10;
+const GH_API    = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
+let   pushTimer = null;
+let   ghSha     = null;   // current file SHA — required by GitHub to update a file
+let   ghEtag    = '';
 
 function setSyncDot(state){
   const dot  = document.getElementById('sync-dot');
   const wrap = document.getElementById('sync-wrap');
   if(dot)  dot.className  = 'sync-dot ' + state;
-  if(wrap) wrap.style.display = gistReady ? 'flex' : 'none';
+  if(wrap) wrap.style.display = ghReady ? 'flex' : 'none';
 }
 
-async function pushToGist(){
-  if(!gistReady) return;
+async function pushToGitHub(){
+  if(!ghReady) return;
   const data = {};
   SYNC_KEYS.forEach(key=>{
     const v = localStorage.getItem(key);
     if(v !== null) try{ data[key] = JSON.parse(v); }catch(e){}
   });
   try{
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`,{
-      method:'PATCH',
-      headers:{'Authorization':`token ${GITHUB_TOKEN}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-      body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(data)}}})
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    const body    = { message:'⛳ golf data', content };
+    if(ghSha) body.sha = ghSha;
+    const res = await fetch(GH_API,{
+      method:'PUT',
+      headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body:JSON.stringify(body)
     });
-    if(res.ok){ lastEtag=''; setSyncDot('synced'); }   // clear etag so next poll detects own write
-    else setSyncDot('offline');
+    if(res.ok){
+      const j = await res.json();
+      ghSha  = j.content.sha;
+      ghEtag = '';          // clear so next poll picks up the change
+      setSyncDot('synced');
+    } else if(res.status===409||res.status===422){
+      // SHA conflict — re-pull to get fresh SHA, changes will push on next edit
+      setSyncDot('offline');
+      pullFromGitHub();
+    } else {
+      setSyncDot('offline');
+    }
   }catch(e){ setSyncDot('offline'); }
 }
 
-async function pullFromGist(){
-  if(!gistReady) return false;
+async function pullFromGitHub(){
+  if(!ghReady) return false;
   try{
-    const headers={'Accept':'application/vnd.github.v3+json','Authorization':`token ${GITHUB_TOKEN}`};
-    if(lastEtag) headers['If-None-Match'] = lastEtag;
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`,{headers});
+    const headers = {'Authorization':`token ${GH_TOKEN}`,'Accept':'application/vnd.github.v3+json'};
+    if(ghEtag) headers['If-None-Match'] = ghEtag;
+    const res = await fetch(GH_API,{headers});
     if(res.status===304){ setSyncDot('synced'); return false; }
+    if(res.status===404){ setSyncDot('synced'); return false; } // file not created yet — first push will create it
     if(!res.ok){ setSyncDot('offline'); return false; }
     const etag = res.headers.get('ETag');
-    if(etag) lastEtag = etag;
-    const gist = await res.json();
-    const raw  = gist.files?.[GIST_FILE]?.content;
-    if(!raw){ setSyncDot('synced'); return false; }
-    const data = JSON.parse(raw);
+    if(etag) ghEtag = etag;
+    const j    = await res.json();
+    ghSha      = j.sha;
+    const data = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\s/g,'')))));
     let changed = false;
     SYNC_KEYS.forEach(key=>{
       if(data[key]!==undefined){
@@ -877,10 +881,10 @@ async function pullFromGist(){
 }
 
 function schedulePush(){
-  if(!gistReady) return;
+  if(!ghReady) return;
   setSyncDot('pending');
   clearTimeout(pushTimer);
-  pushTimer = setTimeout(pushToGist, 1500);
+  pushTimer = setTimeout(pushToGitHub, 1500);
 }
 
 function refreshCurrentTab(){
@@ -2191,14 +2195,14 @@ function toast(msg){
 // INIT
 // ═══════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async ()=>{
-  if(gistReady){
+  if(ghReady){
     setSyncDot('pending');
-    const changed = await pullFromGist();
+    const changed = await pullFromGitHub();
     renderLeaderboard(); syncLeader();
     if(changed) refreshCurrentTab();
-    // Poll every 15 s — all devices stay in sync automatically
+    // Poll every 15 s — all devices pick up changes automatically
     setInterval(async ()=>{
-      const c = await pullFromGist();
+      const c = await pullFromGitHub();
       if(c) refreshCurrentTab();
     }, 15000);
   } else {
