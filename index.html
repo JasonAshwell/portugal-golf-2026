@@ -290,6 +290,29 @@
     .add-cat-form{display:none;gap:8px;margin-top:10px;}
     .add-cat-form.visible{display:flex;}
 
+    /* ─── TOUCH OPTIMISATION ────────────────────── */
+    /* Removes 300ms tap delay on iOS across all interactive elements */
+    *{-webkit-tap-highlight-color:transparent;}
+    button,a,input,select,textarea,label{touch-action:manipulation;}
+    /* Clickable non-button elements — cursor:pointer makes iOS recognise them as tappable */
+    .tbl-avatar,.tbl-avatar-placeholder,.photo-upload-area,.rdot,
+    .log-icon-opt,.log-icon-btn,.rcat-del,.profile-btn,
+    .nav-btn,.btn,.cbtn,.format-pill,.dpick,.t2move{
+      cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+    }
+    /* Ensure all nav buttons are large enough touch targets */
+    .nav-btn{min-height:44px;}
+    .btn{min-height:40px;}
+
+    /* ─── SYNC INDICATOR ────────────────────────── */
+    .sync-wrap{display:flex;align-items:center;padding:0 10px;flex-shrink:0;border-left:1px solid var(--border);gap:5px;}
+    .sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .4s;}
+    .sync-dot.synced{background:#00e676;}
+    .sync-dot.pending{background:#ffd700;animation:syncpulse .9s ease-in-out infinite;}
+    .sync-dot.offline{background:#ff5252;}
+    .sync-dot.off{background:#44445a;}
+    @keyframes syncpulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
     /* ─── TOAST ────────────────────────────────── */
     #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:9px 22px;border-radius:22px;font-weight:800;font-size:.82rem;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;}
 
@@ -312,6 +335,12 @@
     .log-del:hover{color:var(--red);}
     .log-add-btn{width:100%;padding:12px;border:2px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:2px;}
     .log-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+    /* ─── COURSE LINKS ──────────────────────────── */
+    .course-link-btn{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-size:.76rem;font-weight:700;color:var(--text);text-decoration:none;transition:border-color .15s,color .15s;white-space:nowrap;}
+    .course-link-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .how-to-play{background:var(--bg3);border-radius:9px;padding:12px 13px;font-size:.83rem;color:var(--muted);line-height:1.75;margin-top:12px;}
+    .how-to-play-label{font-size:.64rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:6px;display:block;}
     .log-icon-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px;margin:4px 0 10px;}
     .log-icon-opt{background:none;border:1px solid transparent;border-radius:6px;font-size:1.1rem;padding:5px;cursor:pointer;transition:all .1s;text-align:center;}
     .log-icon-opt:hover,.log-icon-opt.sel{background:var(--bg2);border-color:var(--accent);}
@@ -410,6 +439,9 @@
     <button class="nav-btn" onclick="show('day4',this)">📅 Day 4</button>
     <button class="nav-btn" onclick="show('prizes',this)">💰 Prizes</button>
     <button class="nav-btn" onclick="show('logistics',this)">🧳 Logistics</button>
+    <div class="sync-wrap" id="sync-wrap" title="Sync status" style="display:none;">
+      <span id="sync-dot" class="sync-dot off"></span>
+    </div>
   </div>
 </nav>
 
@@ -452,10 +484,15 @@
     </div>
     <div class="card">
       <div class="card-label">🏌️ The Courses</div>
-      <p style="font-size:.87rem;color:var(--muted);line-height:1.65;">
-        <strong style="color:var(--accent)">Faldo Course</strong> — Par 72 · 6,578m · Designed by Sir Nick Faldo. Winner of Portugal's Best Golf Course 2016.<br><br>
-        <strong style="color:var(--blue)">O'Connor Jnr. Course</strong> — Par 72 · Water hazards throughout. Designed by Christy O'Connor Jnr.
+      <p style="font-size:.87rem;color:var(--muted);line-height:1.65;margin-bottom:12px;">
+        <strong style="color:var(--accent)">Faldo Course</strong> — Par 72 · 6,578m · Designed by Sir Nick Faldo. Winner of Portugal's Best Golf Course 2016. Used Days 1 &amp; 3.<br><br>
+        <strong style="color:var(--blue)">O'Connor Jnr. Course</strong> — Par 72 · Water hazards throughout. Designed by Christy O'Connor Jnr. Used Days 2 &amp; 4.
       </p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border);">
+        <a href="https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf" target="_blank" rel="noopener" class="course-link-btn" style="border-color:rgba(0,230,118,.3);">📋 Faldo Scorecard</a>
+        <a href="https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf" target="_blank" rel="noopener" class="course-link-btn" style="border-color:rgba(79,195,247,.3);">📋 O'Connor Scorecard</a>
+        <a href="https://www.amendoeiraresort.com/en/golf/" target="_blank" rel="noopener" class="course-link-btn">🌐 Course Overview</a>
+      </div>
     </div>
   </div>
 
@@ -688,10 +725,45 @@ const AVATARS = [
 ];
 
 const DAY_CONFIG = {
-  1: { title:'Day 1', emoji:'🟢', course:'Faldo Course', courseDesc:'Par 72 · 6,578m · Sir Nick Faldo · 2016 Portugal Best Golf Course', format:'4BBB', tcDay:true, matchPlay:false, color:'var(--accent)' },
-  2: { title:'Day 2', emoji:'🔵', course:"O'Connor Jnr. Course", courseDesc:'Par 72 · Water hazards throughout · Christy O\'Connor Jnr.', format:'4BBB or Skins', tcDay:true, matchPlay:false, color:'var(--blue)', hasFormatChoice:true },
-  3: { title:'Day 3', emoji:'🟡', course:'Faldo Course', courseDesc:'Par 72 · 6,578m · Sir Nick Faldo', format:'2×2 Scramble', tcDay:false, matchPlay:false, color:'var(--gold)', isScramble:true },
-  4: { title:'Day 4', emoji:'🔴', course:"O'Connor Jnr. Course", courseDesc:'Par 72 · Water hazards throughout · Final Day · Tour Championship Decider', format:'1×1 Match Play + Individual Stableford', tcDay:true, matchPlay:true, color:'var(--red)' },
+  1: {
+    title:'Day 1', emoji:'🟢', course:'Faldo Course',
+    courseDesc:'Par 72 · 6,578m · Sir Nick Faldo · 2016 Portugal Best Golf Course',
+    format:'4BBB', tcDay:true, matchPlay:false, color:'var(--accent)',
+    formatHow:'Two pairs go head-to-head across 18 holes. Every player uses their full handicap allowance and plays their own ball throughout. On each hole, the <strong style="color:var(--text)">better stableford score from each pair counts</strong> — that\'s the "Best Ball." Win more holes than your opponents and your pair takes the match. Front 9, Back 9 and overall match are each worth a bet. Your individual stableford score also counts toward the <strong style="color:var(--text)">Tour Championship</strong>.',
+    courseUrl:'https://www.amendoeiraresort.com/en/golf/',
+    scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf',
+    slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
+  },
+  2: {
+    title:'Day 2', emoji:'🔵', course:"O'Connor Jnr. Course",
+    courseDesc:'Par 72 · Water hazards throughout · Christy O\'Connor Jnr.',
+    format:'4BBB or Skins', tcDay:true, matchPlay:false, color:'var(--blue)', hasFormatChoice:true,
+    formatHow:{
+      '4bbb':'Two pairs go head-to-head across 18 holes. Every player plays their own ball, full handicap applied. On each hole, the <strong style="color:var(--text)">better stableford score from each pair counts</strong>. Win more holes than your opponents to take the match. Front 9, Back 9 and overall match are each worth a separate bet. Individual stableford scores count toward the <strong style="color:var(--text)">Tour Championship</strong>.',
+      'skins':'Each hole is worth one <strong style="color:var(--text)">skin</strong>. The pair who wins a hole outright claims the skin for that hole. If the hole is tied, the skin <strong style="color:var(--text)">carries over</strong> — the next hole is then worth two skins, and so on. Carryovers can make individual holes enormous! The pair with the most skins (or highest cumulative skin value) at the end wins the pot. Individual stableford scores still count toward the <strong style="color:var(--text)">Tour Championship</strong>.',
+    },
+    courseUrl:'https://www.amendoeiraresort.com/en/golf/',
+    scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf',
+    slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
+  },
+  3: {
+    title:'Day 3', emoji:'🟡', course:'Faldo Course',
+    courseDesc:'Par 72 · 6,578m · Sir Nick Faldo',
+    format:'2×2 Scramble', tcDay:false, matchPlay:false, color:'var(--gold)', isScramble:true,
+    formatHow:'Both players in the pair tee off, then the <strong style="color:var(--text)">best drive is chosen</strong> — both players pick up and play their next shot from that spot. The best shot is selected again every time until the ball is holed. You\'re aiming for the lowest score possible as a pair. Scoring is in stableford points. <strong style="color:var(--text)">No individual Tour Championship score today</strong> — rest those legs for the finale! Great format for bold, aggressive play.',
+    courseUrl:'https://www.amendoeiraresort.com/en/golf/',
+    scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf',
+    slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
+  },
+  4: {
+    title:'Day 4', emoji:'🔴', course:"O'Connor Jnr. Course",
+    courseDesc:'Par 72 · Water hazards throughout · Final Day · Tour Championship Decider',
+    format:'1×1 Match Play + Individual Stableford', tcDay:true, matchPlay:true, color:'var(--red)',
+    formatHow:'Pure head-to-head golf — you play hole by hole against your opponent. <strong style="color:var(--text)">Win a hole</strong> (score lower on net stableford) and go "1 up." Tie a hole and it\'s halved. The match ends when one player leads by more holes than remain — e.g. "3&2" means 3 up with 2 to play. The match can also be decided on the 18th green. Your stableford score on every hole <strong style="color:var(--text)">simultaneously counts toward the Tour Championship</strong> — so it\'s a double battle to the finish! 🏆',
+    courseUrl:'https://www.amendoeiraresort.com/en/golf/',
+    scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf',
+    slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
+  },
 };
 
 // ═══════════════════════════════════════════════════
@@ -723,8 +795,114 @@ const DEFAULT_LOGISTICS = [
 const LOG_ICONS = ['✈️','🏨','🚗','🌙','🍽️','📋','⛳','🎉','🍺','💊','👕','💰','📍','📞','🗺️','🏖️'];
 let logNextId = 100;
 
+// ═══════════════════════════════════════════════════
+// GITHUB GIST SYNC  —  automatic cross-device sync
+// ─────────────────────────────────────────────────
+// One-time setup for Jason (5 mins):
+//
+//  STEP 1 — Create a storage gist
+//    • Go to https://gist.github.com
+//    • Filename: amd-golf-data.json   Content: {}
+//    • Click "Create secret gist"
+//    • Copy the ID from the URL — the long hash at the end:
+//        gist.github.com/JasonAshwell/←THIS_PART→
+//
+//  STEP 2 — Create a Personal Access Token
+//    • Go to https://github.com/settings/tokens
+//    • "Generate new token (classic)"
+//    • Note: "golf 2026"  |  Expiry: 90 days (or No expiration)
+//    • Tick ONE scope: ✅ gist
+//    • Generate — copy the token (starts with ghp_)
+//
+//  STEP 3 — Paste both values below, save & re-deploy to GitHub Pages
+// ═══════════════════════════════════════════════════
+const GIST_ID      = 'gist.github.com/JasonAshwell';   // ← e.g. 'a3f9c2b8e1d74056abc123...'
+const GITHUB_TOKEN = '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';   // ← e.g. 'ghp_xxxxxxxxxxxxxxxxxx'
+
+const GIST_FILE  = 'amd-golf-data.json';
+const SYNC_KEYS  = Object.values(K);
+const gistReady  = GIST_ID.length > 10 && GITHUB_TOKEN.length > 10;
+let   pushTimer  = null;
+let   lastEtag   = '';
+
+function setSyncDot(state){
+  const dot  = document.getElementById('sync-dot');
+  const wrap = document.getElementById('sync-wrap');
+  if(dot)  dot.className  = 'sync-dot ' + state;
+  if(wrap) wrap.style.display = gistReady ? 'flex' : 'none';
+}
+
+async function pushToGist(){
+  if(!gistReady) return;
+  const data = {};
+  SYNC_KEYS.forEach(key=>{
+    const v = localStorage.getItem(key);
+    if(v !== null) try{ data[key] = JSON.parse(v); }catch(e){}
+  });
+  try{
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`,{
+      method:'PATCH',
+      headers:{'Authorization':`token ${GITHUB_TOKEN}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(data)}}})
+    });
+    if(res.ok){ lastEtag=''; setSyncDot('synced'); }   // clear etag so next poll detects own write
+    else setSyncDot('offline');
+  }catch(e){ setSyncDot('offline'); }
+}
+
+async function pullFromGist(){
+  if(!gistReady) return false;
+  try{
+    const headers={'Accept':'application/vnd.github.v3+json','Authorization':`token ${GITHUB_TOKEN}`};
+    if(lastEtag) headers['If-None-Match'] = lastEtag;
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`,{headers});
+    if(res.status===304){ setSyncDot('synced'); return false; }
+    if(!res.ok){ setSyncDot('offline'); return false; }
+    const etag = res.headers.get('ETag');
+    if(etag) lastEtag = etag;
+    const gist = await res.json();
+    const raw  = gist.files?.[GIST_FILE]?.content;
+    if(!raw){ setSyncDot('synced'); return false; }
+    const data = JSON.parse(raw);
+    let changed = false;
+    SYNC_KEYS.forEach(key=>{
+      if(data[key]!==undefined){
+        const nv = JSON.stringify(data[key]);
+        if(localStorage.getItem(key)!==nv){ localStorage.setItem(key,nv); changed=true; }
+      }
+    });
+    setSyncDot('synced');
+    return changed;
+  }catch(e){ setSyncDot('offline'); return false; }
+}
+
+function schedulePush(){
+  if(!gistReady) return;
+  setSyncDot('pending');
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushToGist, 1500);
+}
+
+function refreshCurrentTab(){
+  const activeTab = document.querySelector('.tab.active');
+  if(!activeTab) return;
+  const id = activeTab.id.replace('tab-','');
+  if(id==='players'){renderPlayerTable();renderTeams();renderPairingsPreview();}
+  else if(id==='leaderboard')renderLeaderboard();
+  else if(id==='prizes'){renderPrizes();renderDailyWinnersSummary();}
+  else if(id==='day1')renderDay(1);
+  else if(id==='day2')renderDay(2);
+  else if(id==='day3')renderDay(3);
+  else if(id==='day4')renderDay(4);
+  else if(id==='logistics')renderLogistics();
+  syncLeader();
+}
+
 function ls(key,def){try{const v=JSON.parse(localStorage.getItem(key));return v!==null?v:def;}catch(e){return def;}}
-function lss(key,val){localStorage.setItem(key,JSON.stringify(val));}
+function lss(key,val){
+  localStorage.setItem(key,JSON.stringify(val));
+  schedulePush();
+}
 
 function getPlayers(){
   const d=ls(K.players,null);
@@ -1076,7 +1254,26 @@ function renderDay(n){
   if(cfg.tcDay) html+=`<span class="tag tag-green">✓ Tour Championship</span>`;
   html+=`<span class="tag tag-blue">${cfg.format}</span>`;
   if(cfg.tcDay) html+=`<span class="tag tag-gold">€10 TC entry counts</span>`;
-  html+=`</div></div>`;
+  html+=`</div>`;
+
+  // How to play description
+  const fmt2=getDayResult(2,'format')||'4bbb';
+  const howToText=typeof cfg.formatHow==='string'?cfg.formatHow:(cfg.formatHow?cfg.formatHow[fmt2]:'');
+  if(howToText){
+    html+=`<div class="how-to-play" id="day${n}-format-desc">
+      <span class="how-to-play-label" style="color:${cfg.color};">📖 How to Play — ${n===2&&fmt2==='skins'?'Skins':cfg.format.split(' or ')[0]}</span>
+      ${howToText}
+    </div>`;
+  }
+
+  // Course links
+  html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+    <a href="${cfg.scorecardUrl}" target="_blank" rel="noopener" class="course-link-btn">📋 Scorecard</a>
+    <a href="${cfg.slopeUrl}" target="_blank" rel="noopener" class="course-link-btn">📊 Slope Rating</a>
+    <a href="${cfg.courseUrl}" target="_blank" rel="noopener" class="course-link-btn">🌐 Course Info</a>
+  </div>`;
+
+  html+=`</div>`;
 
   // Pairings / Matches card
   html+=buildPairingsCard(n,pairings,pMap,players,cfg);
@@ -1409,6 +1606,14 @@ function setDay2Format(fmt){
   document.querySelectorAll('.format-pill').forEach(p=>{
     p.classList.toggle('sel',p.textContent.trim().toLowerCase()===fmt||(p.textContent.trim()==='4BBB'&&fmt==='4bbb'));
   });
+  // Update how-to description
+  const descEl=document.getElementById('day2-format-desc');
+  if(descEl){
+    const cfg=DAY_CONFIG[2];
+    const howToText=cfg.formatHow[fmt]||'';
+    const fmtLabel=fmt==='skins'?'Skins':'4BBB';
+    descEl.innerHTML=`<span class="how-to-play-label" style="color:var(--blue);">📖 How to Play — ${fmtLabel}</span>${howToText}`;
+  }
   toast('Format set to '+(fmt==='skins'?'Skins':'4BBB'));
 }
 
@@ -1985,9 +2190,21 @@ function toast(msg){
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded',()=>{
-  renderLeaderboard();
-  syncLeader();
+document.addEventListener('DOMContentLoaded', async ()=>{
+  if(gistReady){
+    setSyncDot('pending');
+    const changed = await pullFromGist();
+    renderLeaderboard(); syncLeader();
+    if(changed) refreshCurrentTab();
+    // Poll every 15 s — all devices stay in sync automatically
+    setInterval(async ()=>{
+      const c = await pullFromGist();
+      if(c) refreshCurrentTab();
+    }, 15000);
+  } else {
+    setSyncDot('off');
+    renderLeaderboard(); syncLeader();
+  }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 </script>
