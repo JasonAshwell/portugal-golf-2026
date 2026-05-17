@@ -699,18 +699,23 @@
           oninput="saveProfileField(currentPid,'bio',this.value)"></textarea>
       </div>
       <div class="msec">
-        <div class="msec-title">Ratings</div>
+        <div class="msec-title" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Ratings</span>
+          <span id="ratings-count-label" style="font-size:.75rem;color:var(--muted);font-weight:400;"></span>
+        </div>
         <div id="modal-ratings"></div>
         <div class="add-cat-form" id="add-cat-form">
           <input type="text" class="finput" id="new-cat-input"
-                 placeholder="New category name…"
+                 placeholder="e.g. Sand Saves, Putting, Short Game…"
                  onkeydown="if(event.key==='Enter')addCategory()"
                  style="flex:1;">
           <button class="btn btn-sm" onclick="addCategory()">Add</button>
           <button class="btn btn-ghost btn-sm" onclick="toggleAddCatForm(false)">✕</button>
         </div>
-        <button class="btn btn-ghost" style="width:100%;margin-top:10px;"
-                onclick="toggleAddCatForm(true)">+ Add Category</button>
+        <div id="add-rating-btn-wrap" style="margin-top:10px;">
+          <button class="btn btn-ghost" style="width:100%;"
+                  onclick="toggleAddCatForm(true)">+ Add Rating</button>
+        </div>
       </div>
     </div>
   </div>
@@ -732,7 +737,7 @@ const DEFAULT_PLAYERS = [
   {id:7,name:'Mike',  hcp:22},
   {id:8,name:'Rob',   hcp:26},
 ];
-const DEFAULT_CATS = ['Chunder Power','Club Throwing','Bench Warming'];
+const DEFAULT_CATS = []; // no fixed categories — each player has their own
 const TC_DAYS = [1,2,4];
 
 const AVATARS = [
@@ -1031,11 +1036,21 @@ function setRating(pid,cat,val){
   lss(K.ratings,all);
 }
 
-function getCats(){
-  const d=ls(K.cats,null);
-  return(Array.isArray(d)&&d.length>=DEFAULT_CATS.length)?d:[...DEFAULT_CATS];
+// Per-player categories stored inside the ratings object as _cats key
+function getPlayerCats(pid){
+  const all=getAllRatings();
+  const entry=all[pid]||{};
+  return Array.isArray(entry._cats)?entry._cats:[];
 }
-function saveCats(c){lss(K.cats,c);}
+function savePlayerCats(pid,cats){
+  const all=getAllRatings();
+  if(!all[pid])all[pid]={};
+  all[pid]._cats=cats;
+  lss(K.ratings,all);
+}
+// Legacy shim — avgRating still works
+function getCats(){return[];}
+function saveCats(c){}
 
 function getPairings(){return ls(K.pairings,null);}
 function savePairings(p){lss(K.pairings,p);}
@@ -1127,7 +1142,7 @@ function getStandings(){
 }
 
 function avgRating(pid){
-  const cats=getCats();
+  const cats=getPlayerCats(pid);
   const vals=cats.map(c=>getRating(pid,c)).filter(v=>v>0);
   if(!vals.length)return 0;
   return Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10)/10;
@@ -2188,10 +2203,29 @@ function handlePhotoUpload(event){
 }
 
 // ─── Ratings ────────────────────────────────────────
+const MAX_RATINGS = 5;
+
 function renderModalRatings(){
   if(!currentPid)return;
-  const cats=getCats();
+  const cats=getPlayerCats(currentPid);
   const container=document.getElementById('modal-ratings');
+  const atMax=cats.length>=MAX_RATINGS;
+
+  // Update count label
+  const lbl=document.getElementById('ratings-count-label');
+  if(lbl) lbl.textContent=cats.length+'/'+MAX_RATINGS;
+
+  // Show/hide Add Rating button
+  const addWrap=document.getElementById('add-rating-btn-wrap');
+  if(addWrap) addWrap.style.display=atMax?'none':'block';
+  // If at max and form is open, close it
+  if(atMax) toggleAddCatForm(false);
+
+  if(!cats.length){
+    container.innerHTML=`<p style="font-size:.82rem;color:var(--muted);padding:8px 0;">No ratings yet — add up to ${MAX_RATINGS} custom ones below.</p>`;
+    return;
+  }
+
   container.innerHTML=cats.map(cat=>{
     const val=getRating(currentPid,cat);
     const ck=catKey(cat);
@@ -2212,8 +2246,8 @@ function renderModalRatings(){
       <div class="rcat-header">
         <span class="rcat-name">${cat}</span>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span class="rcat-score" id="rscore-${ck}" style="color:${scoreCol}">${val}/10</span>
-          <button class="rcat-del" onclick="deleteCat('${escQ(cat)}')">✕</button>
+          <span class="rcat-score" id="rscore-${ck}" style="color:${scoreCol}">${val>0?val+'/10':'—'}</span>
+          <button class="rcat-del" title="Delete this rating" onclick="deleteCat('${escQ(cat)}')">🗑</button>
         </div>
       </div>
       <div class="rdots" id="rdots-${ck}">${dots}</div>
@@ -2254,27 +2288,36 @@ function clickDot(pid,cat,n){
 }
 
 function deleteCat(cat){
-  if(!confirm('Remove "'+cat+'"? This will delete all ratings for this category.'))return;
-  const cats=getCats().filter(c=>c!==cat);
-  saveCats(cats);
+  if(!currentPid)return;
+  if(!confirm('Remove "'+cat+'" for this player?'))return;
+  const cats=getPlayerCats(currentPid).filter(c=>c!==cat);
+  savePlayerCats(currentPid,cats);
+  // Also clear the stored value
+  const all=getAllRatings();
+  if(all[currentPid])delete all[currentPid][cat];
+  lss(K.ratings,all);
   renderModalRatings();
+  renderPlayerTable();
   toast('"'+cat+'" removed');
 }
 
 function toggleAddCatForm(show){
   const f=document.getElementById('add-cat-form');
+  if(!f)return;
   f.classList.toggle('visible',show);
-  if(show)setTimeout(()=>document.getElementById('new-cat-input').focus(),50);
+  if(show)setTimeout(()=>{const i=document.getElementById('new-cat-input');if(i)i.focus();},50);
 }
 
 function addCategory(){
+  if(!currentPid)return;
   const input=document.getElementById('new-cat-input');
   const name=input.value.trim();
-  if(!name){toast('Please enter a category name');return;}
-  const cats=getCats();
-  if(cats.map(c=>c.toLowerCase()).includes(name.toLowerCase())){toast('Category already exists!');return;}
+  if(!name){toast('Enter a rating name');return;}
+  const cats=getPlayerCats(currentPid);
+  if(cats.length>=MAX_RATINGS){toast('Max '+MAX_RATINGS+' ratings per player');return;}
+  if(cats.map(c=>c.toLowerCase()).includes(name.toLowerCase())){toast('Already exists for this player');return;}
   cats.push(name);
-  saveCats(cats);
+  savePlayerCats(currentPid,cats);
   input.value='';
   toggleAddCatForm(false);
   renderModalRatings();
