@@ -227,7 +227,7 @@
     #modal-overlay{
       position:fixed;inset:0;z-index:1000;
       background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
-      display:flex;align-items:center;justify-content:center;
+      display:none;align-items:center;justify-content:center;
       padding:12px;
       opacity:0;transition:opacity .25s;
     }
@@ -468,10 +468,10 @@
       <div class="card-label">📅 Daily Team Comps</div>
       <p style="font-size:.87rem;color:var(--muted);line-height:1.65;margin-bottom:10px;">~€5 per player per day alongside the individual Stableford.</p>
       <div>
-        <span class="tag tag-blue">Day 1 — 4BBB (Faldo)</span>
-        <span class="tag tag-blue">Day 2 — Skins / 4BBB (O'Connor)</span>
-        <span class="tag tag-blue">Day 3 — 2×2 Scramble (Faldo)</span>
-        <span class="tag tag-blue">Day 4 — 1×1 Match Play (O'Connor)</span>
+        <span class="tag tag-blue">Sun 1pm — 4BBB (Faldo)</span>
+        <span class="tag tag-blue">Mon 9:30am — Skins / 4BBB (O'Connor)</span>
+        <span class="tag tag-blue">Tue 9:30am — 2×2 Scramble (Faldo)</span>
+        <span class="tag tag-blue">Wed 9:30am — 1×1 Match Play (Faldo)</span>
       </div>
     </div>
     <div class="card">
@@ -485,8 +485,8 @@
     <div class="card">
       <div class="card-label">🏌️ The Courses</div>
       <p style="font-size:.87rem;color:var(--muted);line-height:1.65;margin-bottom:12px;">
-        <strong style="color:var(--accent)">Faldo Course</strong> — Par 72 · 6,578m · Designed by Sir Nick Faldo. Winner of Portugal's Best Golf Course 2016. Used Days 1 &amp; 3.<br><br>
-        <strong style="color:var(--blue)">O'Connor Jnr. Course</strong> — Par 72 · Water hazards throughout. Designed by Christy O'Connor Jnr. Used Days 2 &amp; 4.
+        <strong style="color:var(--accent)">Faldo Course</strong> — Par 72 · 6,578m · Designed by Sir Nick Faldo. Winner of Portugal's Best Golf Course 2016. Used Days 1, 3 &amp; 4.<br><br>
+        <strong style="color:var(--blue)">O'Connor Jnr. Course</strong> — Par 72 · Water hazards throughout. Designed by Christy O'Connor Jnr. Used Day 2 only.
       </p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border);">
         <a href="https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf" target="_blank" rel="noopener" class="course-link-btn" style="border-color:rgba(0,230,118,.3);">📋 Faldo Scorecard</a>
@@ -726,7 +726,7 @@ const AVATARS = [
 
 const DAY_CONFIG = {
   1: {
-    title:'Day 1', emoji:'🟢', course:'Faldo Course',
+    title:'Day 1', emoji:'🟢', course:'Faldo Course', dayName:'Sunday', teeTime:'1:00pm',
     courseDesc:'Par 72 · 6,578m · Sir Nick Faldo · 2016 Portugal Best Golf Course',
     format:'4BBB', tcDay:true, matchPlay:false, color:'var(--accent)',
     formatHow:'Two pairs go head-to-head across 18 holes. Every player uses their full handicap allowance and plays their own ball throughout. On each hole, the <strong style="color:var(--text)">better stableford score from each pair counts</strong> — that\'s the "Best Ball." Win more holes than your opponents and your pair takes the match. Front 9, Back 9 and overall match are each worth a bet. Your individual stableford score also counts toward the <strong style="color:var(--text)">Tour Championship</strong>.',
@@ -735,7 +735,7 @@ const DAY_CONFIG = {
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
   },
   2: {
-    title:'Day 2', emoji:'🔵', course:"O'Connor Jnr. Course",
+    title:'Day 2', emoji:'🔵', course:"O'Connor Jnr. Course", dayName:'Monday', teeTime:'9:30am',
     courseDesc:'Par 72 · Water hazards throughout · Christy O\'Connor Jnr.',
     format:'4BBB or Skins', tcDay:true, matchPlay:false, color:'var(--blue)', hasFormatChoice:true,
     formatHow:{
@@ -747,7 +747,7 @@ const DAY_CONFIG = {
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
   },
   3: {
-    title:'Day 3', emoji:'🟡', course:'Faldo Course',
+    title:'Day 3', emoji:'🟡', course:'Faldo Course', dayName:'Tuesday', teeTime:'9:30am',
     courseDesc:'Par 72 · 6,578m · Sir Nick Faldo',
     format:'2×2 Scramble', tcDay:false, matchPlay:false, color:'var(--gold)', isScramble:true,
     formatHow:'Both players in the pair tee off, then the <strong style="color:var(--text)">best drive is chosen</strong> — both players pick up and play their next shot from that spot. The best shot is selected again every time until the ball is holed. You\'re aiming for the lowest score possible as a pair. Scoring is in stableford points. <strong style="color:var(--text)">No individual Tour Championship score today</strong> — rest those legs for the finale! Great format for bold, aggressive play.',
@@ -756,13 +756,13 @@ const DAY_CONFIG = {
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
   },
   4: {
-    title:'Day 4', emoji:'🔴', course:"O'Connor Jnr. Course",
-    courseDesc:'Par 72 · Water hazards throughout · Final Day · Tour Championship Decider',
+    title:'Day 4', emoji:'🔴', course:'Faldo Course', dayName:'Wednesday', teeTime:'9:30am',
+    courseDesc:'Par 72 · 6,578m · Sir Nick Faldo · Final Day · Tour Championship Decider',
     format:'1×1 Match Play + Individual Stableford', tcDay:true, matchPlay:true, color:'var(--red)',
     formatHow:'Pure head-to-head golf — you play hole by hole against your opponent. <strong style="color:var(--text)">Win a hole</strong> (score lower on net stableford) and go "1 up." Tie a hole and it\'s halved. The match ends when one player leads by more holes than remain — e.g. "3&2" means 3 up with 2 to play. The match can also be decided on the 18th green. Your stableford score on every hole <strong style="color:var(--text)">simultaneously counts toward the Tour Championship</strong> — so it\'s a double battle to the finish! 🏆',
     courseUrl:'https://www.amendoeiraresort.com/en/golf/',
-    scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf',
-    slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
+    scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf',
+    slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
   },
 };
 
@@ -1244,10 +1244,10 @@ function renderDay(n){
   // Header card
   let html=`<div class="day-header-card" style="border-color:${cfg.color}33;">
     <div class="day-title-row">
-      <div class="day-num-badge" style="background:${cfg.color};color:${n===3?'#000':'#000'};">${n}</div>
+      <div class="day-num-badge" style="background:${cfg.color};color:#000;">${n}</div>
       <div>
         <div class="day-title">${cfg.course}</div>
-        <div class="day-sub">${cfg.courseDesc}</div>
+        <div class="day-sub">${cfg.dayName} · ⏰ ${cfg.teeTime} · ${cfg.courseDesc}</div>
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:4px;">`;
@@ -2206,7 +2206,4 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     renderLeaderboard(); syncLeader();
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-</script>
-</body>
-</html>
+document.addEventListener('keydown'
