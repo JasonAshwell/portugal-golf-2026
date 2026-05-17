@@ -833,84 +833,57 @@ const LOG_ICONS = ['✈️','🏨','🚗','🌙','🍽️','📋','⛳','🎉','
 let logNextId = 100;
 
 // ═══════════════════════════════════════════════════
-// GITHUB SYNC — saves data.json directly to your repo
+// FIREBASE SYNC  —  no tokens, no auth, just a URL
 // ─────────────────────────────────────────────────
-// One-time setup (2 mins):
-//   1. Go to https://github.com/settings/tokens
-//   2. "Generate new token (classic)"
-//      Name: "golf 2026"  |  Scope: ✅ repo  |  Generate
-//   3. Copy the ghp_... token and paste below, then re-deploy
+// One-time setup (5 mins, completely free):
+//
+//  1. Go to https://console.firebase.google.com
+//     → Add project → name it "golf-2026" → Continue
+//     → Disable Google Analytics → Create project
+//
+//  2. In left sidebar: Build → Realtime Database
+//     → Create Database → choose any location → Next
+//     → Select "Start in test mode" → Enable
+//
+//  3. Copy the URL shown at the top — looks like:
+//        https://golf-2026-default-rtdb.firebaseio.com
+//
+//  4. Paste it below (keep the quotes), redeploy — done!
+//     No tokens, no accounts for anyone else needed.
 // ═══════════════════════════════════════════════════
-const GH_TOKEN = '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';           // ← paste your ghp_... token here
-const GH_OWNER = 'JasonAshwell';
-const GH_REPO  = 'portugal-golf-2026';
-const GH_FILE  = 'data.json';
+const FIREBASE_URL = 'https://golf-2026-4fe36-default-rtdb.firebaseio.com/';  // ← paste your database URL here
 
-const SYNC_KEYS = Object.values(K);
-const ghReady   = GH_TOKEN.length > 10;
-const GH_API    = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
-let   pushTimer = null;
-let   ghSha     = null;   // current file SHA — required by GitHub to update a file
-let   ghEtag    = '';
+const SYNC_KEYS  = Object.values(K);
+const fbReady    = typeof FIREBASE_URL === 'string' && FIREBASE_URL.includes('firebaseio.com');
+let   pushTimer  = null;
 
 function setSyncDot(state){
   const dot  = document.getElementById('sync-dot');
   const wrap = document.getElementById('sync-wrap');
   if(dot)  dot.className  = 'sync-dot ' + state;
-  if(wrap) wrap.style.display = ghReady ? 'flex' : 'none';
+  if(wrap) wrap.style.display = fbReady ? 'flex' : 'none';
 }
 
-// Safely encode JSON → base64 (handles Unicode player names etc.)
-function jsonToB64(obj){
-  const str=JSON.stringify(obj);
-  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(_,p)=>String.fromCharCode('0x'+p)));
-}
-function b64ToJson(b64){
-  const str=atob(b64.replace(/\s/g,''));
-  return JSON.parse(decodeURIComponent(str.split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-}
-
-async function pushToGitHub(){
-  if(!ghReady) return;
+async function pushToFirebase(){
+  if(!fbReady) return;
   const data={};
   SYNC_KEYS.forEach(key=>{ const v=localStorage.getItem(key); if(v!==null)try{data[key]=JSON.parse(v);}catch(e){} });
   try{
-    const body={message:'⛳ golf data',content:jsonToB64(data)};
-    if(ghSha) body.sha=ghSha;
-    const res=await fetch(GH_API,{method:'PUT',
-      headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-      body:JSON.stringify(body)});
-    if(res.ok){
-      const j=await res.json(); ghSha=j.content.sha; ghEtag='';
-      setSyncDot('synced');
-    } else if(res.status===401){
-      setSyncDot('offline'); toast('❌ Sync: invalid token (401) — check GH_TOKEN');
-    } else if(res.status===403){
-      setSyncDot('offline'); toast('❌ Sync: token needs "repo" scope (403)');
-    } else if(res.status===404){
-      setSyncDot('offline'); toast('❌ Sync: repo not found (404) — check GH_OWNER/GH_REPO');
-    } else if(res.status===409||res.status===422){
-      setSyncDot('offline'); pullFromGitHub(); // SHA conflict — refresh and retry next edit
-    } else {
-      setSyncDot('offline'); toast('❌ Sync error '+res.status);
-    }
+    const res=await fetch(FIREBASE_URL+'/golf.json',{
+      method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+    });
+    setSyncDot(res.ok ? 'synced' : 'offline');
+    if(!res.ok) toast('❌ Sync error '+res.status+' — check Firebase URL');
   }catch(e){ setSyncDot('offline'); toast('❌ Sync failed: '+e.message); }
 }
 
-async function pullFromGitHub(){
-  if(!ghReady) return false;
+async function pullFromFirebase(){
+  if(!fbReady) return false;
   try{
-    const headers={'Authorization':`token ${GH_TOKEN}`,'Accept':'application/vnd.github.v3+json'};
-    if(ghEtag) headers['If-None-Match']=ghEtag;
-    const res=await fetch(GH_API,{headers});
-    if(res.status===304){ setSyncDot('synced'); return false; }
-    if(res.status===404){ setSyncDot('synced'); return false; } // data.json not created yet
-    if(res.status===401){ setSyncDot('offline'); toast('❌ Sync: invalid token (401)'); return false; }
-    if(res.status===403){ setSyncDot('offline'); toast('❌ Sync: token needs "repo" scope (403)'); return false; }
-    if(!res.ok){ setSyncDot('offline'); toast('❌ Sync read error '+res.status); return false; }
-    const etag=res.headers.get('ETag'); if(etag) ghEtag=etag;
-    const j=await res.json(); ghSha=j.sha;
-    const data=b64ToJson(j.content);
+    const res=await fetch(FIREBASE_URL+'/golf.json');
+    if(!res.ok){ setSyncDot('offline'); return false; }
+    const data=await res.json();
+    if(!data){ setSyncDot('synced'); return false; }
     let changed=false;
     SYNC_KEYS.forEach(key=>{
       if(data[key]!==undefined){ const nv=JSON.stringify(data[key]); if(localStorage.getItem(key)!==nv){localStorage.setItem(key,nv);changed=true;} }
@@ -921,10 +894,10 @@ async function pullFromGitHub(){
 }
 
 function schedulePush(){
-  if(!ghReady) return;
+  if(!fbReady) return;
   setSyncDot('pending');
   clearTimeout(pushTimer);
-  pushTimer = setTimeout(pushToGitHub, 1500);
+  pushTimer=setTimeout(pushToFirebase, 1500);
 }
 
 function refreshCurrentTab(){
@@ -2315,14 +2288,13 @@ function toast(msg){
 // INIT
 // ═══════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async ()=>{
-  if(ghReady){
+  if(fbReady){
     setSyncDot('pending');
-    const changed = await pullFromGitHub();
+    const changed = await pullFromFirebase();
     renderLeaderboard(); syncLeader();
     if(changed) refreshCurrentTab();
-    // Poll every 15 s — all devices pick up changes automatically
     setInterval(async ()=>{
-      const c = await pullFromGitHub();
+      const c = await pullFromFirebase();
       if(c) refreshCurrentTab();
     }, 15000);
   } else {
