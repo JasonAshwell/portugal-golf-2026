@@ -851,9 +851,10 @@ let logNextId = 100;
 //  4. Paste it below (keep the quotes), redeploy — done!
 //     No tokens, no accounts for anyone else needed.
 // ═══════════════════════════════════════════════════
-const FIREBASE_URL = 'https://golf-2026-4fe36-default-rtdb.firebaseio.com/';  // ← paste your database URL here
+const FIREBASE_URL = 'https://golf-2026-4fe36-default-rtdb.firebaseio.com';  // ← paste your database URL here
 
 const SYNC_KEYS  = Object.values(K);
+const FB_BASE    = FIREBASE_URL.replace(/\/+$/, '');  // strip any trailing slash
 const fbReady    = typeof FIREBASE_URL === 'string' && FIREBASE_URL.includes('firebaseio.com');
 let   pushTimer  = null;
 
@@ -869,7 +870,7 @@ async function pushToFirebase(){
   const data={};
   SYNC_KEYS.forEach(key=>{ const v=localStorage.getItem(key); if(v!==null)try{data[key]=JSON.parse(v);}catch(e){} });
   try{
-    const res=await fetch(FIREBASE_URL+'/golf.json',{
+    const res=await fetch(FB_BASE+'/golf.json',{
       method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
     });
     setSyncDot(res.ok ? 'synced' : 'offline');
@@ -880,7 +881,7 @@ async function pushToFirebase(){
 async function pullFromFirebase(){
   if(!fbReady) return false;
   try{
-    const res=await fetch(FIREBASE_URL+'/golf.json');
+    const res=await fetch(FB_BASE+'/golf.json');
     if(!res.ok){ setSyncDot('offline'); return false; }
     const data=await res.json();
     if(!data){ setSyncDot('synced'); return false; }
@@ -2302,7 +2303,4 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     renderLeaderboard(); syncLeader();
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-</script>
-</body>
-</html>
+document.addEventListener('keydown',e=>{if(e.key==
