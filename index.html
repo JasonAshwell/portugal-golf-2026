@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⛳ The Amendoeira Tour 2026</title>
+  <style>
+    :root {
+      --bg:     #0b0b12;
+      --bg2:    #111119;
+      --bg3:    #181826;
+      --border: #242438;
+      --accent: #00e676;
+      --gold:   #ffd700;
+      --silver: #b0b8c8;
+      --bronze: #cd7f32;
+      --blue:   #4fc3f7;
+      --red:    #ff5252;
+      --text:   #f0f0ff;
+      --muted:  #8888aa;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+    /* ─── HERO ─────────────────────────────────── */
+    .hero{
+      position:relative;height:260px;
+      background:#0b0b12;
+      overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;
+    }
+    .hero-img{
+      position:absolute;inset:0;
+      background:url('https://www.amendoeiraresort.com/uploads/info_landing/AGR_Faldo_13Tee_2.jpg') center/cover no-repeat;
+      opacity:.28;
+    }
+    .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,18,.2) 0%,rgba(11,11,18,.7) 100%);}
+    .hero-content{position:relative;z-index:2;padding:0 16px;}
+    .hero-pill{
+      display:inline-block;background:var(--accent);color:#000;
+      font-size:.65rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+      padding:4px 14px;border-radius:20px;margin-bottom:12px;
+    }
+    .hero h1{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;letter-spacing:-1px;line-height:1.1;margin-bottom:8px;}
+    .hero h1 em{font-style:normal;color:var(--accent);}
+    .hero p{color:var(--muted);font-size:.9rem;}
+
+    /* ─── NAV ──────────────────────────────────── */
+    .nav{background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;overflow-x:auto;scrollbar-width:none;}
+    .nav::-webkit-scrollbar{display:none;}
+    .nav-inner{display:flex;padding:0 6px;min-width:max-content;}
+    .nav-btn{
+      background:none;border:none;color:var(--muted);
+      padding:13px 14px;cursor:pointer;font-size:.82rem;font-weight:700;
+      border-bottom:3px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;
+    }
+    .nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .nav-btn:hover{color:var(--text);}
+
+    /* ─── LAYOUT ───────────────────────────────── */
+    .page{max-width:780px;margin:0 auto;padding:20px 14px 60px;}
+    .tab{display:none;}.tab.active{display:block;}
+
+    /* ─── SECTION HEADING ──────────────────────── */
+    .sh{font-size:1rem;font-weight:800;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+    .sh::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* ─── CARD ─────────────────────────────────── */
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+    .card-label{font-size:.68rem;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+
+    /* ─── STATS STRIP ──────────────────────────── */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+    .stat{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center;}
+    .stat-v{font-size:1.55rem;font-weight:900;color:var(--accent);line-height:1;margin-bottom:4px;}
+    .stat-l{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+
+    /* ─── FORMAT TAGS ──────────────────────────── */
+    .tag{display:inline-block;border-radius:6px;padding:3px 9px;font-size:.72rem;font-weight:700;margin:2px;}
+    .tag-green{background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3);color:var(--accent);}
+    .tag-blue{background:rgba(79,195,247,.12);border:1px solid rgba(79,195,247,.3);color:var(--blue);}
+    .tag-gold{background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);color:var(--gold);}
+
+    /* ─── PLAYERS GRID ─────────────────────────── */
+    .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:12px;}
+    .pcard{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:border-color .2s;}
+    .pcard:hover{border-color:var(--accent);}
+    .pavatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;margin:0 auto 8px;color:#000;}
+    .pname{font-weight:700;font-size:.92rem;margin-bottom:5px;}
+    .hbadge{display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:2px 10px;font-size:.75rem;font-weight:700;color:var(--gold);}
+
+    /* ─── LEADERBOARD ──────────────────────────── */
+    .lb{width:100%;border-collapse:collapse;}
+    .lb thead th{background:var(--bg3);padding:9px 10px;text-align:left;font-size:.65rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+    .lb tbody td{padding:11px 10px;border-bottom:1px solid var(--border);font-size:.88rem;vertical-align:middle;}
+    .lb tbody tr:last-child td{border-bottom:none;}
+    .lb tbody tr:hover td{background:rgba(255,255,255,.015);}
+    .pill{display:inline-block;background:var(--bg3);border-radius:6px;padding:3px 9px;font-size:.82rem;font-weight:600;min-width:34px;text-align:center;}
+    .pill-total{background:var(--accent);color:#000;font-weight:900;}
+    .pill-empty{color:var(--muted);}
+    .r1{color:var(--gold);font-weight:900;font-size:1.1rem;}
+    .r2{color:var(--silver);}
+    .r3{color:var(--bronze);}
+
+    /* ─── DAY CARDS ────────────────────────────── */
+    .dcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;}
+    .dcard-head{background:var(--bg3);padding:13px 15px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+    .dnum{background:var(--accent);color:#000;font-weight:900;font-size:.75rem;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .dtitle{font-weight:800;font-size:.95rem;}
+    .dsub{font-size:.72rem;color:var(--muted);margin-top:2px;}
+    .dcard-body{padding:13px 15px;}
+    .dbody-desc{font-size:.83rem;color:var(--muted);line-height:1.65;margin-top:10px;}
+    .dbody-desc strong{color:var(--text);}
+
+    /* ─── BETTING BOX ──────────────────────────── */
+    .bet-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.87rem;}
+    .bet-row:last-child{border-bottom:none;}
+    .bet-amt{color:var(--gold);font-weight:800;}
+
+    /* ─── SCORE ENTRY ──────────────────────────── */
+    .day-pick-btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px;}
+    .dpick{background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s;}
+    .dpick.sel{background:var(--accent);color:#000;border-color:var(--accent);}
+    .score-tbl{width:100%;border-collapse:collapse;}
+    .score-tbl td{padding:6px 4px;vertical-align:middle;}
+    .score-tbl .pcell{font-weight:600;font-size:.88rem;padding-right:10px;white-space:nowrap;}
+    .score-tbl input[type=number]{
+      background:var(--bg3);border:1px solid var(--border);color:var(--text);
+      border-radius:7px;padding:8px 6px;font-size:.9rem;width:62px;text-align:center;outline:none;
+    }
+    .score-tbl input[type=number]:focus{border-color:var(--accent);}
+    .fl{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+
+    /* ─── BUTTONS ──────────────────────────────── */
+    .btn{display:inline-block;background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px 18px;font-size:.85rem;font-weight:800;cursor:pointer;transition:opacity .15s;}
+    .btn:hover{opacity:.88;}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+    .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+    .btn-danger{background:var(--red);color:#fff;}
+
+    /* ─── PRIZES ───────────────────────────────── */
+    .prize-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+    .prize-row:last-child{border-bottom:none;}
+    .prize-pos{font-size:1.4rem;width:34px;text-align:center;}
+    .prize-who{flex:1;font-weight:700;}
+    .prize-amt{font-weight:900;font-size:1.1rem;color:var(--gold);}
+
+    /* ─── FORM FIELDS ──────────────────────────── */
+    .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:9px;}
+    .fl-label{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+    .finput{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 11px;font-size:.88rem;outline:none;}
+    .finput:focus{border-color:var(--accent);}
+
+    /* ─── TEAM DISPLAY ─────────────────────────── */
+    .teams-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+    .team-box{background:var(--bg3);border:1px dashed var(--border);border-radius:10px;padding:12px;}
+    .team-box-title{font-size:.68rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;}
+    .team-member{display:flex;align-items:center;gap:7px;font-size:.87rem;padding:4px 0;}
+    .tdot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+    /* ─── NET BALANCE ──────────────────────────── */
+    .net-pos{color:var(--accent);font-weight:800;}
+    .net-neg{color:var(--red);font-weight:800;}
+
+    /* ─── TOAST ────────────────────────────────── */
+    #toast{
+      position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+      background:var(--accent);color:#000;padding:9px 22px;border-radius:22px;
+      font-weight:800;font-size:.82rem;z-index:9999;
+      opacity:0;transition:opacity .3s;pointer-events:none;
+    }
+
+    /* ─── RESPONSIVE ───────────────────────────── */
+    @media(max-width:480px){
+      .stats{grid-template-columns:repeat(2,1fr);}
+      .pgrid{grid-template-columns:repeat(2,1fr);}
+      .teams-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-img"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-pill">⛳ Portugal 2026</div>
+    <h1>The <em>Amendoeira</em> Tour</h1>
+    <p>Amendoeira Golf Resort · Alcantarilha, Algarve</p>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="show('home',this)">🏠 Home</button>
+    <button class="nav-btn" onclick="show('players',this)">👥 Players</button>
+    <button class="nav-btn" onclick="show('leaderboard',this)">🏆 Leaderboard</button>
+    <button class="nav-btn" onclick="show('schedule',this)">📅 Schedule</button>
+    <button class="nav-btn" onclick="show('scores',this)">⛳ Scores</button>
+    <button class="nav-btn" onclick="show('prizes',this)">💰 Prizes</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ════════════════════════════════════════════ HOME -->
+  <div id="tab-home" class="tab active">
+
+    <div class="stats">
+      <div class="stat"><div class="stat-v">8</div><div class="stat-l">Players</div></div>
+      <div class="stat"><div class="stat-v">4</div><div class="stat-l">Days</div></div>
+      <div class="stat"><div class="stat-v">€80</div><div class="stat-l">Tour Pot</div></div>
+      <div class="stat"><div class="stat-v" id="home-leader">—</div><div class="stat-l">Leader</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">🏆 Tour Championship</div>
+      <p style="font-size:.87rem;color:var(--muted);line-height:1.65;">
+        Most combined Stableford points over <strong style="color:var(--text)">3 rounds</strong>
+        (Days 1, 2 &amp; 4). €10 entry per player — <strong style="color:var(--text)">€80 total pot</strong>.
+      </p>
+      <div style="margin-top:11px;display:flex;flex-wrap:wrap;">
+        <span class="tag tag-gold">🥇 1st — €50</span>
+        <span class="tag tag-gold">🥈 2nd — €20</span>
+        <span class="tag tag-gold">🥉 3rd — €10</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">📅 Daily Team Comps</div>
+      <p style="font-size:.87rem;color:var(--muted);line-height:1.65;margin-bottom:10px;">
+        ~€5 per player per day alongside the individual Stableford.
+        Choose between a <strong style="color:var(--text)">prize format</strong> (1st / 2nd / 3rd)
+        or <strong style="color:var(--text)">inter-4ball betting</strong> within each group.
+      </p>
+      <div>
+        <span class="tag tag-blue">Day 1 — 4BBB</span>
+        <span class="tag tag-blue">Day 2 — Skins / 4BBB</span>
+        <span class="tag tag-blue">Day 3 — 2×2 Scramble</span>
+        <span class="tag tag-blue">Day 4 — 1×1 Match Play</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">💵 Inter-4Ball Betting</div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:10px;">Per 4-ball group (2 groups of 4) in match-play style:</p>
+      <div class="bet-row"><span>🏌️ Front 9 Winner</span><span class="bet-amt">€1</span></div>
+      <div class="bet-row"><span>🏌️ Back 9 Winner</span><span class="bet-amt">€1</span></div>
+      <div class="bet-row"><span>🏆 Overall Match</span><span class="bet-amt">€1</span></div>
+      <div class="bet-row"><span>📍 Nearest the Pin ×4</span><span class="bet-amt">€0.50 each</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">🏌️ The Courses</div>
+      <p style="font-size:.87rem;color:var(--muted);line-height:1.65;">
+        <strong style="color:var(--accent)">Faldo Course</strong> — Par 72 · 6,578m · Designed by Sir Nick Faldo.
+        Winner of Portugal's Best Golf Course 2016 (World Golf Awards).<br><br>
+        <strong style="color:var(--blue)">O'Connor Jnr. Course</strong> — Par 72 · Water hazards throughout.
+        Designed by Christy O'Connor Jnr. Accuracy is everything.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════ PLAYERS -->
+  <div id="tab-players" class="tab">
+    <div class="sh">👥 The Eight</div>
+    <div class="pgrid" id="pgrid"></div>
+    <div class="card">
+      <div class="card-label">Suggested 4BBB Pairings</div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px;">Balanced by combined handicap — adjust on the day!</p>
+      <div class="teams-grid" id="pairings-grid"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ LEADERBOARD -->
+  <div id="tab-leaderboard" class="tab">
+    <div class="sh">🏆 Tour Championship</div>
+    <div style="background:rgba(79,195,247,.1);border:1px solid rgba(79,195,247,.3);border-radius:8px;padding:9px 13px;font-size:.8rem;color:var(--blue);margin-bottom:12px;">
+      Individual Stableford across Days 1, 2 &amp; 4 · €10 entry · Enter scores in the <strong>Scores</strong> tab
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="lb">
+        <thead>
+          <tr>
+            <th>Pos</th><th>Player</th><th>HCP</th>
+            <th>Day 1</th><th>Day 2</th><th>Day 4</th><th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ SCHEDULE -->
+  <div id="tab-schedule" class="tab">
+    <div class="sh">📅 Schedule</div>
+
+    <div class="dcard">
+      <div class="dcard-head">
+        <div class="dnum">1</div>
+        <div>
+          <div class="dtitle">Day 1 — Faldo Course</div>
+          <div class="dsub">Par 72 · 6,578m · Designed by Sir Nick Faldo · 2016 Best Golf Course Portugal</div>
+        </div>
+      </div>
+      <div class="dcard-body">
+        <div>
+          <span class="tag tag-green">Individual Stableford ✓ TC</span>
+          <span class="tag tag-blue">4BBB Team Competition</span>
+          <span class="tag tag-gold">~€5/player pot</span>
+        </div>
+        <p class="dbody-desc">
+          <strong>4-Ball Best Ball (4BBB):</strong> each pair's best stableford score on every hole counts as the team score.
+          Individual stableford scores run simultaneously and count toward the Tour Championship.
+          Perfect warm-up opener on the famous Faldo layout.
+        </p>
+      </div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-head">
+        <div class="dnum">2</div>
+        <div>
+          <div class="dtitle">Day 2 — O'Connor Jnr. Course</div>
+          <div class="dsub">Par 72 · Lakes &amp; water features throughout · Designed by Christy O'Connor Jnr.</div>
+        </div>
+      </div>
+      <div class="dcard-body">
+        <div>
+          <span class="tag tag-green">Individual Stableford ✓ TC</span>
+          <span class="tag tag-blue">Skins or 4BBB — decide on the day</span>
+          <span class="tag tag-gold">~€5/player pot</span>
+        </div>
+        <p class="dbody-desc">
+          Choose on the morning: <strong>Skins</strong> (hole-by-hole battle, unclaimed skins carry over — high drama on those water holes!)
+          or <strong>4BBB</strong> if the group fancies a team game again.
+          Individual Stableford still counts toward the Tour Championship.
+        </p>
+      </div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-head">
+        <div class="dnum">3</div>
+        <div>
+          <div class="dtitle">Day 3 — Faldo Course</div>
+          <div class="dsub">2 × 2 Scramble · No individual Stableford today</div>
+        </div>
+      </div>
+      <div class="dcard-body">
+        <div>
+          <span class="tag tag-blue">4 Teams of 2 — Scramble</span>
+          <span class="tag tag-gold">~€5/player pot</span>
+        </div>
+        <p class="dbody-desc">
+          <strong>Scramble format:</strong> both players hit, the best shot is selected, both play from that spot — repeat until holed.
+          4 teams of 2 battle it out for bragging rights. No individual stableford today —
+          <em>rest those Tour Championship legs for the finale!</em>
+        </p>
+      </div>
+    </div>
+
+    <div class="dcard">
+      <div class="dcard-head">
+        <div class="dnum">4</div>
+        <div>
+          <div class="dtitle">Day 4 — O'Connor Jnr. Course</div>
+          <div class="dsub">🏆 Final Day · Tour Championship Decider</div>
+        </div>
+      </div>
+      <div class="dcard-body">
+        <div>
+          <span class="tag tag-green">Individual Stableford ✓ TC</span>
+          <span class="tag tag-blue">1×1 Match Play</span>
+          <span class="tag tag-gold">~€5/player pot</span>
+        </div>
+        <p class="dbody-desc">
+          The finale! <strong>1v1 match play</strong> with simultaneous individual stableford scoring.
+          Win your match <em>and</em> post a big stableford total to climb the Tour Championship leaderboard.
+          The Tour Champion is crowned after the round — 🏆 glory (and €50) awaits!
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════ SCORES -->
+  <div id="tab-scores" class="tab">
+    <div class="sh">⛳ Enter Scores</div>
+
+    <div class="card">
+      <div class="card-label">Tour Championship — Individual Stableford</div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Enter each player's total stableford points for Days 1, 2 &amp; 4.</p>
+
+      <div>
+        <div class="fl-label" style="margin-bottom:6px;">Select Day</div>
+        <div class="day-pick-btns">
+          <button class="dpick" id="dpick-1" onclick="pickDay(1)">Day 1</button>
+          <button class="dpick" id="dpick-2" onclick="pickDay(2)">Day 2</button>
+          <button class="dpick" id="dpick-4" onclick="pickDay(4)">Day 4</button>
+        </div>
+      </div>
+
+      <div id="score-area" style="display:none;">
+        <table class="score-tbl">
+          <tbody id="score-rows"></tbody>
+        </table>
+        <div class="fl">
+          <button class="btn" onclick="saveScores()">💾 Save Scores</button>
+          <button class="btn btn-ghost" onclick="clearDay()">Clear Day</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">📋 Daily Team Results &amp; Notes</div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px;">Record team comp results, match scores, NP winners, and any notes.</p>
+      <div id="daily-results-area"></div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════ PRIZES -->
+  <div id="tab-prizes" class="tab">
+    <div class="sh">💰 Prize Summary</div>
+
+    <div class="card">
+      <div class="card-label">🏆 Tour Championship — €80 Pot</div>
+      <div class="prize-row">
+        <div class="prize-pos">🥇</div>
+        <div class="prize-who" id="p1st">TBD</div>
+        <div class="prize-amt">€50</div>
+      </div>
+      <div class="prize-row">
+        <div class="prize-pos">🥈</div>
+        <div class="prize-who" id="p2nd">TBD</div>
+        <div class="prize-amt">€20</div>
+      </div>
+      <div class="prize-row">
+        <div class="prize-pos">🥉</div>
+        <div class="prize-who" id="p3rd">TBD</div>
+        <div class="prize-amt">€10</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">📅 Daily Prize Pool</div>
+      <div class="bet-row"><span>Tour Championship entry</span><span class="bet-amt">€10 × 8 = €80</span></div>
+      <div class="bet-row"><span>Daily comp (~€5 × 8 players)</span><span class="bet-amt">~€40 / day</span></div>
+      <div class="bet-row"><span>4 days total daily pot</span><span class="bet-amt">~€160</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">💵 Inter-4Ball Per Round Breakdown</div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px;">Within each 4-ball group — match play style:</p>
+      <div class="bet-row"><span>Front 9 winner</span><span class="bet-amt">€1</span></div>
+      <div class="bet-row"><span>Back 9 winner</span><span class="bet-amt">€1</span></div>
+      <div class="bet-row"><span>Overall match</span><span class="bet-amt">€1</span></div>
+      <div class="bet-row"><span>4 × Nearest the Pin</span><span class="bet-amt">€0.50 each</span></div>
+      <div class="bet-row" style="font-weight:700;color:var(--text)">
+        <span>Max per round (sweep)</span><span class="bet-amt">€5</span>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- end .page -->
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════
+const PLAYERS = [
+  { id:1, name:'MJ',     hcp:6  },
+  { id:2, name:'Jason',  hcp:6  },
+  { id:3, name:'Nick',   hcp:8  },
+  { id:4, name:'Chris',  hcp:11 },
+  { id:5, name:'Luke',   hcp:13 },
+  { id:6, name:'Mickey', hcp:22 },
+  { id:7, name:'Mike',   hcp:22 },
+  { id:8, name:'Rob',    hcp:26 },
+];
+
+const TC_DAYS = [1, 2, 4];
+
+// Balanced pairings: pair lowest with highest handicap
+const DEFAULT_PAIRS = [
+  ['MJ','Rob'],
+  ['Jason','Mike'],
+  ['Nick','Mickey'],
+  ['Chris','Luke'],
+];
+
+const AVATARS = [
+  'linear-gradient(135deg,#00e676,#00bcd4)',
+  'linear-gradient(135deg,#ffd700,#ff9800)',
+  'linear-gradient(135deg,#e91e63,#9c27b0)',
+  'linear-gradient(135deg,#2196f3,#00bcd4)',
+  'linear-gradient(135deg,#ff5722,#ff9800)',
+  'linear-gradient(135deg,#4caf50,#8bc34a)',
+  'linear-gradient(135deg,#9c27b0,#e91e63)',
+  'linear-gradient(135deg,#00bcd4,#2196f3)',
+];
+
+// ════════════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════════════
+const SCORE_KEY = 'amendoeira_scores_v1';
+const DAILY_KEY = 'amendoeira_daily_v1';
+
+function getScores() {
+  try { return JSON.parse(localStorage.getItem(SCORE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function putScore(day, pid, val) {
+  const s = getScores();
+  if (!s[day]) s[day] = {};
+  if (val === '' || val === null || isNaN(val)) delete s[day][pid];
+  else s[day][pid] = parseInt(val);
+  localStorage.setItem(SCORE_KEY, JSON.stringify(s));
+}
+function clearDayScores(day) {
+  const s = getScores();
+  s[day] = {};
+  localStorage.setItem(SCORE_KEY, JSON.stringify(s));
+}
+
+function getDaily() {
+  try { return JSON.parse(localStorage.getItem(DAILY_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function putDaily(day, field, val) {
+  const d = getDaily();
+  if (!d[day]) d[day] = {};
+  d[day][field] = val;
+  localStorage.setItem(DAILY_KEY, JSON.stringify(d));
+}
+
+// ════════════════════════════════════════════════
+// STANDINGS HELPER
+// ════════════════════════════════════════════════
+function getStandings() {
+  const scores = getScores();
+  return PLAYERS.map(p => {
+    const ds = {};
+    let total = 0;
+    TC_DAYS.forEach(d => {
+      const v = (scores[d] && scores[d][p.id] != null) ? scores[d][p.id] : null;
+      ds[d] = v;
+      if (v !== null) total += v;
+    });
+    return { ...p, ds, total };
+  }).sort((a,b) => b.total - a.total);
+}
+
+// ════════════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════════════
+function show(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if (name === 'leaderboard') renderLeaderboard();
+  if (name === 'prizes')      renderPrizes();
+  if (name === 'players')     renderPlayers();
+  if (name === 'scores')      renderDailyForm();
+}
+
+// ════════════════════════════════════════════════
+// PLAYERS
+// ════════════════════════════════════════════════
+function renderPlayers() {
+  const standings = getStandings();
+  const rankMap = {};
+  standings.forEach((p,i) => { rankMap[p.id] = { rank: i+1, total: p.total }; });
+
+  document.getElementById('pgrid').innerHTML = PLAYERS.map((p,i) => {
+    const r = rankMap[p.id];
+    const pts = r.total > 0 ? `<div style="font-size:.72rem;color:var(--accent);margin-top:5px;">${r.total} pts · #${r.rank}</div>` : '';
+    return `
+      <div class="pcard">
+        <div class="pavatar" style="background:${AVATARS[i]}">${p.name.slice(0,2).toUpperCase()}</div>
+        <div class="pname">${p.name}</div>
+        <span class="hbadge">HCP ${p.hcp}</span>
+        ${pts}
+      </div>`;
+  }).join('');
+
+  document.getElementById('pairings-grid').innerHTML = DEFAULT_PAIRS.map((pair, i) => `
+    <div class="team-box">
+      <div class="team-box-title">Pair ${i+1}</div>
+      ${pair.map(name => {
+        const p = PLAYERS.find(x => x.name === name);
+        return `<div class="team-member"><div class="tdot"></div>${p.name} <span style="font-size:.72rem;color:var(--muted);margin-left:4px;">(${p.hcp})</span></div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// LEADERBOARD
+// ════════════════════════════════════════════════
+function renderLeaderboard() {
+  const standings = getStandings();
+
+  const leaderEl = document.getElementById('home-leader');
+  if (leaderEl && standings[0].total > 0) leaderEl.textContent = standings[0].name;
+
+  document.getElementById('lb-body').innerHTML = standings.map((p, i) => {
+    const medal = [' 🥇','🥈','🥉'][i] || (i+1);
+    const cls = ['r1','r2','r3'][i] || '';
+    const cell = d => p.ds[d] !== null
+      ? `<span class="pill">${p.ds[d]}</span>`
+      : `<span class="pill pill-empty">—</span>`;
+    const tot = p.total > 0
+      ? `<span class="pill pill-total">${p.total}</span>`
+      : `<span class="pill pill-empty">—</span>`;
+    return `
+      <tr>
+        <td><span class="${cls}">${medal}</span></td>
+        <td style="font-weight:700;">${p.name}</td>
+        <td style="color:var(--muted);">${p.hcp}</td>
+        <td>${cell(1)}</td>
+        <td>${cell(2)}</td>
+        <td>${cell(4)}</td>
+        <td>${tot}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════
+// SCORE ENTRY
+// ════════════════════════════════════════════════
+let activeDay = null;
+
+function pickDay(day) {
+  activeDay = day;
+  [1,2,4].forEach(d => {
+    const b = document.getElementById('dpick-' + d);
+    b.classList.toggle('sel', d === day);
+  });
+
+  const scores = getScores();
+  const area = document.getElementById('score-area');
+  area.style.display = 'block';
+
+  document.getElementById('score-rows').innerHTML = PLAYERS.map(p => {
+    const val = (scores[day] && scores[day][p.id] != null) ? scores[day][p.id] : '';
+    return `
+      <tr>
+        <td class="pcell">${p.name} <span style="font-size:.7rem;color:var(--muted);">(${p.hcp})</span></td>
+        <td><input type="number" id="si-${p.id}" min="0" max="60" value="${val}" placeholder="pts"
+             oninput="putScore(${day},${p.id},this.value);syncLeader();"></td>
+        <td style="padding-left:8px;font-size:.75rem;color:var(--muted);">pts</td>
+      </tr>`;
+  }).join('');
+}
+
+function saveScores() {
+  if (!activeDay) return;
+  PLAYERS.forEach(p => {
+    const el = document.getElementById('si-' + p.id);
+    if (el) putScore(activeDay, p.id, el.value);
+  });
+  syncLeader();
+  toast('Scores saved ✅');
+}
+
+function clearDay() {
+  if (!activeDay) return;
+  if (!confirm('Clear all scores for Day ' + activeDay + '?')) return;
+  clearDayScores(activeDay);
+  pickDay(activeDay);
+  syncLeader();
+  toast('Day ' + activeDay + ' cleared');
+}
+
+function syncLeader() {
+  const s = getStandings();
+  const el = document.getElementById('home-leader');
+  if (el && s[0].total > 0) el.textContent = s[0].name;
+}
+
+// ════════════════════════════════════════════════
+// DAILY RESULTS FORM
+// ════════════════════════════════════════════════
+const DAY_FIELDS = {
+  1: { label:'Day 1 — 4BBB (Faldo Course)',          fields:['4BBB Winner(s)','Front 9 Winner','Back 9 Winner','NP1','NP2','NP3','NP4','Notes'] },
+  2: { label:'Day 2 — Skins/4BBB (O\'Connor Course)', fields:['Format Used (Skins/4BBB)','Winner(s)','Best Skin','Front 9 Winner','Back 9 Winner','NP1','NP2','NP3','NP4','Notes'] },
+  3: { label:'Day 3 — 2×2 Scramble (Faldo Course)',  fields:['Pair 1 Score','Pair 2 Score','Pair 3 Score','Pair 4 Score','Scramble Winner','Notes'] },
+  4: { label:'Day 4 — Match Play (O\'Connor Course)', fields:['Match Results','Tour Champion 🏆','NP1','NP2','NP3','NP4','Notes'] },
+};
+
+function renderDailyForm() {
+  const daily = getDaily();
+  const container = document.getElementById('daily-results-area');
+  container.innerHTML = Object.entries(DAY_FIELDS).map(([day, cfg]) => `
+    <div style="margin-bottom:18px;">
+      <div style="font-weight:800;font-size:.88rem;color:var(--blue);margin-bottom:10px;">${cfg.label}</div>
+      ${cfg.fields.map(f => {
+        const key = f.replace(/\s+/g,'_');
+        const val = (daily[day] && daily[day][key]) ? daily[day][key] : '';
+        return `
+          <div class="fg">
+            <label class="fl-label">${f}</label>
+            <input class="finput" type="text" value="${val.replace(/"/g,'&quot;')}"
+                   placeholder="${f}..."
+                   oninput="putDaily(${day},'${key}',this.value)">
+          </div>`;
+      }).join('')}
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin-bottom:18px;">
+  `).join('');
+}
+
+// ════════════════════════════════════════════════
+// PRIZES
+// ════════════════════════════════════════════════
+function renderPrizes() {
+  const standings = getStandings();
+  ['1st','2nd','3rd'].forEach((pos, i) => {
+    const el = document.getElementById('p' + pos);
+    if (!el) return;
+    const p = standings[i];
+    el.textContent = p.total > 0 ? `${p.name}  (${p.total} pts)` : 'TBD';
+  });
+}
+
+// ════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.style.opacity = '0'; }, 2400);
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  renderPlayers();
+  renderLeaderboard();
+  syncLeader();
+});
+</script>
+</body>
+</html>
