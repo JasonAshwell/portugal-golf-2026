@@ -456,6 +456,7 @@
     <button class="nav-btn" onclick="show('day2',this)">📅 Day 2</button>
     <button class="nav-btn" onclick="show('day3',this)">📅 Day 3</button>
     <button class="nav-btn" onclick="show('day4',this)">📅 Day 4</button>
+    <button class="nav-btn" onclick="show('day5',this)">🎉 Day 5</button>
     <button class="nav-btn" onclick="show('prizes',this)">💰 Prizes</button>
     <button class="nav-btn" onclick="show('logistics',this)">🧳 Logistics</button>
     <div class="sync-wrap" id="sync-wrap" title="Tap for sync help" style="display:none;cursor:pointer;" onclick="showSyncHelp()">
@@ -584,6 +585,7 @@
   <div id="tab-day2" class="tab"><div id="day2-content"></div></div>
   <div id="tab-day3" class="tab"><div id="day3-content"></div></div>
   <div id="tab-day4" class="tab"><div id="day4-content"></div></div>
+  <div id="tab-day5" class="tab"><div id="day5-content"></div></div>
 
   <!-- ══════════════════════════════════ PRIZES -->
   <div id="tab-prizes" class="tab">
@@ -784,6 +786,15 @@ const DAY_CONFIG = {
     scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf',
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
   },
+  5: {
+    title:'Day 5', emoji:'🎉', course:"O'Connor 10", dayName:'Thursday', teeTime:'TBC',
+    courseDesc:"Par 72 · Christy O'Connor Jnr. Course (10-hole layout) · Fun Day",
+    format:'TBD', tcDay:false, matchPlay:false, funDay:true, color:'var(--muted)',
+    formatHow:'Format yet to be decided — watch this space! Not everyone may play. No Tour Championship points today.',
+    courseUrl:'https://www.amendoeiraresort.com/en/golf/',
+    scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf',
+    slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
+  },
 };
 
 // Slope & course ratings per tee colour (approx. — edit if resort provides different values)
@@ -951,6 +962,16 @@ function showSyncHelp(){
 function refreshCurrentTab(){
   const activeTab = document.querySelector('.tab.active');
   if(!activeTab) return;
+
+  // If the user is actively typing or selecting in any input/textarea/select
+  // within the current tab, skip the re-render to avoid destroying their work.
+  // The next 15-second poll will pick it up once they're done.
+  const active = document.activeElement;
+  if(active && activeTab.contains(active)){
+    const tag = active.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+  }
+
   const id = activeTab.id.replace('tab-','');
   if(id==='players'){renderPlayerTable();renderTeams();renderPairingsPreview();}
   else if(id==='leaderboard')renderLeaderboard();
@@ -959,6 +980,7 @@ function refreshCurrentTab(){
   else if(id==='day2')renderDay(2);
   else if(id==='day3')renderDay(3);
   else if(id==='day4')renderDay(4);
+  else if(id==='day5')renderDay(5);
   else if(id==='logistics')renderLogistics();
   syncLeader();
 }
@@ -1143,6 +1165,7 @@ function show(name,btn){
   if(name==='day2')renderDay(2);
   if(name==='day3')renderDay(3);
   if(name==='day4')renderDay(4);
+  if(name==='day5')renderDay(5);
   if(name==='logistics')renderLogistics();
 }
 
@@ -1426,6 +1449,25 @@ function renderDay(n){
   </div>`;
 
   html+=`</div>`;
+
+  // Fun day placeholder — no pairings, results or scores yet
+  if(cfg.funDay){
+    html+=`<div class="card" style="text-align:center;padding:32px 20px;">
+      <div style="font-size:2.4rem;margin-bottom:12px;">🎉</div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">Fun Day — Format TBD</div>
+      <div style="font-size:.85rem;color:var(--muted);max-width:360px;margin:0 auto 20px;">
+        The format for Thursday hasn't been decided yet. Not everyone may play.
+        Check back closer to the trip for updates!
+      </div>
+      <div style="display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+        <span class="tag tag-blue">O'Connor 10</span>
+        <span class="tag" style="background:var(--bg3);color:var(--muted);">No Tour Championship points</span>
+        <span class="tag" style="background:var(--bg3);color:var(--muted);">Optional</span>
+      </div>
+    </div>`;
+    container.innerHTML=html;
+    return;
+  }
 
   // Pairings / Matches card
   html+=buildPairingsCard(n,pairings,pMap,players,cfg);
