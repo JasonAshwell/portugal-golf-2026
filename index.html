@@ -1526,10 +1526,15 @@ function buildPairingsCard(n,pairings,pMap,players,cfg){
       <button class="btn btn-sm" onclick="generateAllPairings();renderDay(${n})">⛳ Generate All Pairings</button>`;
   } else {
     const pairs=pairings[n];
-    // 4-ball 1: pairs[0] (Team A) vs pairs[2] (Team B)
-    // 4-ball 2: pairs[1] (Team A) vs pairs[3] (Team B)
-    html+=buildGroupPairs(n,pairs,pMap,cfg,0);//4-ball 1
-    html+=buildGroupPairs(n,pairs,pMap,cfg,1);//4-ball 2
+    if(cfg.matchPlay){
+      // Day 4: show as 4 individual 1v1 singles matches
+      html+=buildSinglesDisplay(n,pairs,pMap,cfg);
+    } else {
+      // 4-ball 1: pairs[0] (Team A) vs pairs[2] (Team B)
+      // 4-ball 2: pairs[1] (Team A) vs pairs[3] (Team B)
+      html+=buildGroupPairs(n,pairs,pMap,cfg,0);//4-ball 1
+      html+=buildGroupPairs(n,pairs,pMap,cfg,1);//4-ball 2
+    }
     // Edit form (hidden by default)
     html+=buildEditPairsForm(n,players);
   }
@@ -1583,6 +1588,39 @@ function buildGroupPairs(n,pairs,pMap,cfg,grpIdx){
   </div>`;
 
   html+=`</div>`;
+  return html;
+}
+
+function buildSinglesDisplay(n,pairs,pMap,cfg){
+  // Derive 4 individual matches from pairs:
+  //   Match 1: pairs[0][0] vs pairs[2][0]
+  //   Match 2: pairs[0][1] vs pairs[2][1]
+  //   Match 3: pairs[1][0] vs pairs[3][0]
+  //   Match 4: pairs[1][1] vs pairs[3][1]
+  const matchups=[
+    [pairs[0]&&pairs[0][0], pairs[2]&&pairs[2][0]],
+    [pairs[0]&&pairs[0][1], pairs[2]&&pairs[2][1]],
+    [pairs[1]&&pairs[1][0], pairs[3]&&pairs[3][0]],
+    [pairs[1]&&pairs[1][1], pairs[3]&&pairs[3][1]],
+  ];
+  const grpCls=['group-label-1','group-label-2','group-label-1','group-label-2'];
+  let html='';
+  matchups.forEach(([idA,idB],i)=>{
+    const pA=pMap[idA],pB=pMap[idB];
+    if(!pA||!pB)return;
+    html+=`<div class="group-box">
+      <div class="group-label ${grpCls[i]}">Match ${i+1}</div>
+      <div class="pair-row">
+        <div class="pair-players" style="justify-content:center;gap:10px;flex-wrap:wrap;">
+          ${miniAvatar(pA,pA.idx)}
+          <span class="pair-name">${pA.name}</span><span class="pair-hcp">(${pA.hcp})</span>
+          <span class="vs-chip vs-chip-match">VS</span>
+          ${miniAvatar(pB,pB.idx)}
+          <span class="pair-name">${pB.name}</span><span class="pair-hcp">(${pB.hcp})</span>
+        </div>
+      </div>
+    </div>`;
+  });
   return html;
 }
 
@@ -1767,24 +1805,24 @@ function buildScrambleResults(pairs,pMap,players,n){
 }
 
 function buildMatchPlayResults(pairs,pMap,players,n){
-  let html='';
-  [[0,1],[2,3]].forEach(([pi1,pi2],grpIdx)=>{
-    const grp=grpIdx+1;
-    const ids1=pairs[pi1],ids2=pairs[pi2];
-    html+=`<div class="result-section"><div class="result-section-title">Group ${grp} Matches</div>`;
-    // Each pair is a match: ids[0] vs ids[1]
-    [pi1,pi2].forEach((pi,mi)=>{
-      const ids=pairs[pi];
-      const p0=pMap[ids[0]],p1=pMap[ids[1]];
-      if(!p0||!p1)return;
-      const matchOpts=`<option value="">— Select —</option><option value="${ids[0]}">${p0.name}</option><option value="${ids[1]}">${p1.name}</option><option value="half">Halved</option>`;
-      html+=`<div class="result-row">
-        <span class="result-label">⚔️ ${p0.name} vs ${p1.name}</span>
-        <select class="result-select" id="res-${n}-m${pi}" onchange="saveDayResult(${n},'m${pi}',this.value)">${matchOpts}</select>
-      </div>`;
-    });
-    html+=`</div>`;
+  // 4 individual singles matches derived from pairs
+  const matchups=[
+    [pairs[0]&&pairs[0][0], pairs[2]&&pairs[2][0]],
+    [pairs[0]&&pairs[0][1], pairs[2]&&pairs[2][1]],
+    [pairs[1]&&pairs[1][0], pairs[3]&&pairs[3][0]],
+    [pairs[1]&&pairs[1][1], pairs[3]&&pairs[3][1]],
+  ];
+  let html=`<div class="result-section"><div class="result-section-title">Singles Matches</div>`;
+  matchups.forEach(([idA,idB],i)=>{
+    const p0=pMap[idA],p1=pMap[idB];
+    if(!p0||!p1)return;
+    const matchOpts=`<option value="">— Select —</option><option value="${idA}">${p0.name}</option><option value="${idB}">${p1.name}</option><option value="half">Halved</option>`;
+    html+=`<div class="result-row">
+      <span class="result-label">⚔️ ${p0.name} vs ${p1.name}</span>
+      <select class="result-select" id="res-${n}-s${i}" onchange="saveDayResult(${n},'s${i}',this.value)">${matchOpts}</select>
+    </div>`;
   });
+  html+=`</div>`;
   return html;
 }
 
@@ -1982,8 +2020,8 @@ function calculateWinnings(){
     const dayData=results[n]||{};
 
     if(cfg.matchPlay){
-      // Day 4 individual matches: winner gets €10 from day pot
-      [0,1,2,3].forEach(i=>addPlayer(dayData['m'+i],n,10));
+      // Day 4 individual singles matches: winner gets €10 from day pot
+      [0,1,2,3].forEach(i=>addPlayer(dayData['s'+i],n,10));
     } else if(cfg.isScramble){
       // Scramble: winning pair gets €10/person
       addPair(dayData.scramble_winner,n,10);
@@ -2084,11 +2122,18 @@ function renderDailyWinnersSummary(){
     if(n===2&&dayData.format==='skins'){
       if(dayData.skins_winner)entries.push(['🏆 Skins Winner',playerLabel(dayData.skins_winner)]);
     } else if(cfg.matchPlay){
+      // Singles matches: pairs[0][0] vs pairs[2][0], etc.
+      const sMatchups=pairs?[
+        [pairs[0]&&pairs[0][0], pairs[2]&&pairs[2][0]],
+        [pairs[0]&&pairs[0][1], pairs[2]&&pairs[2][1]],
+        [pairs[1]&&pairs[1][0], pairs[3]&&pairs[3][0]],
+        [pairs[1]&&pairs[1][1], pairs[3]&&pairs[3][1]],
+      ]:[];
       [0,1,2,3].forEach(i=>{
-        const v=dayData['m'+i];
-        if(v&&pairs&&pairs[i]){
-          const ids=pairs[i];
-          const p0=pMap[ids[0]],p1=pMap[ids[1]];
+        const v=dayData['s'+i];
+        if(v&&sMatchups[i]){
+          const [idA,idB]=sMatchups[i];
+          const p0=pMap[idA],p1=pMap[idB];
           if(p0&&p1)entries.push([`⚔️ ${p0.name} vs ${p1.name}`,playerLabel(v)]);
         }
       });
