@@ -1402,15 +1402,11 @@ function renderPairingsPreview(){
     if(!pairs)return;
     let matchStr='';
     if(cfg.matchPlay){
-      // Day 4: show as 4 individual 1v1 matches
-      const matchups=[
-        [pairs[0]&&pairs[0][0], pairs[2]&&pairs[2][0]],
-        [pairs[0]&&pairs[0][1], pairs[2]&&pairs[2][1]],
-        [pairs[1]&&pairs[1][0], pairs[3]&&pairs[3][0]],
-        [pairs[1]&&pairs[1][1], pairs[3]&&pairs[3][1]],
-      ];
-      matchStr=matchups.map(([idA,idB],i)=>{
-        const pA=pMap[idA],pB=pMap[idB];
+      // Day 4: show each pair as a 1v1 match (mirrors the VS-within-pair display on the Day 4 tab)
+      matchStr=[0,1,2,3].map(i=>{
+        const pair=pairs[i];
+        if(!pair||pair.length<2)return'';
+        const pA=pMap[pair[0]],pB=pMap[pair[1]];
         if(!pA||!pB)return'';
         return`<span style="display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:.75rem;margin:2px;">
           <b>${pA.name}</b> <span style="color:var(--red);font-size:.7rem;font-weight:800;">VS</span> <b>${pB.name}</b>
