@@ -834,6 +834,7 @@ const K = {
   logistics:'amd_logistics_v1',
   tees:     'amd_tees_v1',
   hcpov:    'amd_hcpov_v1',
+  noSlope:  'amd_noslope_v1',
 };
 
 const DEFAULT_LOGISTICS = [
@@ -1079,7 +1080,16 @@ function badgeClass(c){return c==='high'?'cbadge-high':c==='low'?'cbadge-low':'c
 function courseKey(n){return DAY_CONFIG[n].course==='Faldo Course'?'Faldo':'OConnor';}
 function getDayTee(n){return (ls(K.tees,{})[n])||'Yellow';}
 function saveDayTee(n,tee){const t=ls(K.tees,{});t[n]=tee;lss(K.tees,t);renderDay(n);}
-function getTeeData(n){const tees=COURSE_TEES[courseKey(n)];return tees.find(t=>t.name===getDayTee(n))||tees[0];}
+function getDayNoSlope(n){return !!(ls(K.noSlope,{})[n]);}
+function saveDayNoSlope(n,on){const s=ls(K.noSlope,{});s[n]=on;lss(K.noSlope,s);renderDay(n);}
+function getTeeData(n){
+  if(getDayNoSlope(n)){
+    // No slope: return a neutral tee object (slope 113 = multiplier 1.0, HI used directly)
+    const base=COURSE_TEES[courseKey(n)][0];
+    return{...base,slope:113,label:'No Slope'};
+  }
+  const tees=COURSE_TEES[courseKey(n)];return tees.find(t=>t.name===getDayTee(n))||tees[0];
+}
 function courseHcp(hcpIdx,teeData){return Math.round(hcpIdx*teeData.slope/113);}
 
 // Course HCP for a player on a specific day — slope only, no confidence adjustment
@@ -1341,37 +1351,32 @@ function swapPlayers(pidA, teamA, pidB){
 // ═══════════════════════════════════════════════════
 // PAIRINGS GENERATION
 // ═══════════════════════════════════════════════════
+function shuffleArr(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
 function generateAllPairings(){
   const teams=getTeams(),players=getPlayers();
   if(!teams){toast('⚠️ Draw teams first!');return;}
   const pMap={};players.forEach(p=>pMap[p.id]=p);
-  // Sort each team by eff handicap (low = better player)
-  const A=teams.A.map(id=>pMap[id]).filter(Boolean).sort((a,b)=>effHcp(a)-effHcp(b)).map(p=>p.id);
-  const B=teams.B.map(id=>pMap[id]).filter(Boolean).sort((a,b)=>effHcp(a)-effHcp(b)).map(p=>p.id);
+  // Shuffle each team so regenerate gives different results each time
+  const A=shuffleArr(teams.A.map(id=>pMap[id]).filter(Boolean).map(p=>p.id));
+  const B=shuffleArr(teams.B.map(id=>pMap[id]).filter(Boolean).map(p=>p.id));
   if(A.length!==4||B.length!==4){toast('⚠️ Need exactly 4 players in each team');return;}
-  // Optimal rotation: maximises partner AND opponent variety.
-  // Players sorted by effHcp so [0]=best, [3]=highest hcp.
-  // Each row: [A4b1_pair, A4b2_pair, B4b1_pair, B4b2_pair]
-  // 4-ball 1 = A_pair_0 vs B_pair_0  |  4-ball 2 = A_pair_1 vs B_pair_1
-  //
-  // Result across days 1-3: every player partners ALL 3 teammates
-  //                          AND faces ALL 4 opponents from the other team.
-  // Day 4 repeats A-pairs from Day 2 (unavoidable — only 3 unique combos exist)
-  //   but uses fresh B opponent groupings for maximum cross-team variety.
-  //
+  // Optimal rotation — each player partners all 3 teammates & faces all 4 opponents (days 1-3)
   //        4-ball 1              4-ball 2
   // Day 1: A[0,1] vs B[0,1]  |  A[2,3] vs B[2,3]
   // Day 2: A[0,2] vs B[1,3]  |  A[1,3] vs B[0,2]
   // Day 3: A[0,3] vs B[1,2]  |  A[1,2] vs B[0,3]
-  // Day 4: A[0,2] vs B[2,3]  |  A[1,3] vs B[0,1]
   const schedule=[
     [[0,1],[2,3],[0,1],[2,3]],
     [[0,2],[1,3],[1,3],[0,2]],
     [[0,3],[1,2],[1,2],[0,3]],
-    [[0,2],[1,3],[2,3],[0,1]],
   ];
   const pairings={};
-  for(let day=1;day<=4;day++){
+  for(let day=1;day<=3;day++){
     const s=schedule[day-1];
     pairings[day]=[
       [A[s[0][0]],A[s[0][1]]],  // Team A pair → 4-ball 1
@@ -1380,6 +1385,15 @@ function generateAllPairings(){
       [B[s[3][0]],B[s[3][1]]],  // Team B pair → 4-ball 2
     ];
   }
+  // Day 4 — match play: cross-team 1v1 pairs derived from the 4-ball groupings
+  // 4-ball 1: A[0],A[2] walk with B[2],B[3] → matches A[0]vsB[2], A[2]vsB[3]
+  // 4-ball 2: A[1],A[3] walk with B[0],B[1] → matches A[1]vsB[0], A[3]vsB[1]
+  pairings[4]=[
+    [A[0],B[2]],  // Match 1 (4-ball 1)
+    [A[2],B[3]],  // Match 2 (4-ball 1)
+    [A[1],B[0]],  // Match 3 (4-ball 2)
+    [A[3],B[1]],  // Match 4 (4-ball 2)
+  ];
   savePairings(pairings);
   renderPairingsPreview();
   toast('Pairings generated for all 4 days! ⛳');
@@ -1470,13 +1484,15 @@ function renderDay(n){
 
   // Tee picker
   const activeTee=getDayTee(n);
+  const noSlope=getDayNoSlope(n);
   const td=getTeeData(n);
   html+=`<div style="margin-top:12px;">
     <div style="font-size:.64rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">⛳ Tee Box Selection</div>
     <div class="tee-picker">
-      ${COURSE_TEES[courseKey(n)].map(t=>`<button class="tee-btn${activeTee===t.name?' sel':''}" style="background:${t.bg};color:${t.fg};" onclick="saveDayTee(${n},'${t.name}')">${t.name}<span class="tee-slope">Slope ${t.slope}</span></button>`).join('')}
+      ${COURSE_TEES[courseKey(n)].map(t=>`<button class="tee-btn${!noSlope&&activeTee===t.name?' sel':''}" style="background:${t.bg};color:${t.fg};${noSlope?'opacity:.45;':''}" onclick="saveDayNoSlope(${n},false);saveDayTee(${n},'${t.name}')">${t.name}<span class="tee-slope">Slope ${t.slope}</span></button>`).join('')}
+      <button class="tee-btn${noSlope?' sel':''}" style="background:var(--accent);color:#000;" onclick="saveDayNoSlope(${n},true)">No Slope<span class="tee-slope">HI direct</span></button>
     </div>
-    <div class="tee-info-row">Selected: <strong style="color:var(--text);">${activeTee}</strong> · CR ${td.cr} · Slope ${td.slope} · Par ${td.par}</div>
+    <div class="tee-info-row">${noSlope?'<strong style="color:var(--accent);">No slope adjustment</strong> — playing off Handicap Index directly':`Selected: <strong style="color:var(--text);">${activeTee}</strong> · CR ${td.cr} · Slope ${td.slope} · Par ${td.par}`}</div>
   </div>`;
 
   // Course links
@@ -1601,18 +1617,39 @@ function buildGroupPairs(n,pairs,pMap,cfg,grpIdx){
 }
 
 function buildEditPairsForm(n,players){
-  const pMap=playerMap();
-  const opts=players.map(p=>`<option value="${p.id}">${p.name} (${p.hcp})</option>`).join('');
+  const cfg=DAY_CONFIG[n];
+  const teams=getTeams()||{A:[],B:[]};
+  const names=getTeamNames();
+  const teamASet=new Set(teams.A||[]);
+  const teamBSet=new Set(teams.B||[]);
+  const optsA=players.filter(p=>teamASet.has(p.id)).map(p=>`<option value="${p.id}">${p.name} (${p.hcp})</option>`).join('');
+  const optsB=players.filter(p=>teamBSet.has(p.id)).map(p=>`<option value="${p.id}">${p.name} (${p.hcp})</option>`).join('');
+  const tA=names.A||'Team A', tB=names.B||'Team B';
   let html=`<div class="edit-pair-form" id="edit-pairs-form-${n}" style="display:none;margin-top:10px;">
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Reassign players to pairs. No duplicates allowed.</div>`;
-  [0,1,2,3].forEach(i=>{
-    html+=`<div class="edit-pair-row">
-      <span class="edit-pair-label">Pair ${i+1}</span>
-      <select class="edit-pair-sel" id="ep-${n}-${i}-0">${opts}</select>
-      <span class="edit-pair-amp">&amp;</span>
-      <select class="edit-pair-sel" id="ep-${n}-${i}-1">${opts}</select>
-    </div>`;
-  });
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Reassign players. No duplicates allowed.</div>`;
+  if(cfg.matchPlay){
+    // Day 4: 4 individual matches — first slot = Team A, second slot = Team B
+    [0,1,2,3].forEach(i=>{
+      html+=`<div class="edit-pair-row">
+        <span class="edit-pair-label">Match ${i+1}</span>
+        <select class="edit-pair-sel" id="ep-${n}-${i}-0" title="${tA}">${optsA}</select>
+        <span class="edit-pair-amp" style="color:var(--red);font-weight:800;">VS</span>
+        <select class="edit-pair-sel" id="ep-${n}-${i}-1" title="${tB}">${optsB}</select>
+      </div>`;
+    });
+  } else {
+    // Days 1-3: same-team pairs
+    const labels=[`${tA} / Pair 1`,`${tA} / Pair 2`,`${tB} / Pair 1`,`${tB} / Pair 2`];
+    [0,1,2,3].forEach(i=>{
+      const opts=i<2?optsA:optsB;
+      html+=`<div class="edit-pair-row">
+        <span class="edit-pair-label">${labels[i]}</span>
+        <select class="edit-pair-sel" id="ep-${n}-${i}-0">${opts}</select>
+        <span class="edit-pair-amp">&amp;</span>
+        <select class="edit-pair-sel" id="ep-${n}-${i}-1">${opts}</select>
+      </div>`;
+    });
+  }
   html+=`<div class="fl">
     <button class="btn btn-sm" onclick="saveEditPairings(${n})">💾 Save Pairings</button>
     <button class="btn btn-ghost btn-sm" onclick="cancelEditPairings(${n})">Cancel</button>
@@ -1653,21 +1690,32 @@ function cancelEditPairings(n){
 }
 
 function saveEditPairings(n){
+  const cfg=DAY_CONFIG[n];
   const newPairs=[];
-  const seen=new Set();
+  const seenA=new Set(),seenB=new Set(),seenAll=new Set();
   let valid=true;
   for(let i=0;i<4;i++){
     const s0=document.getElementById('ep-'+n+'-'+i+'-0');
     const s1=document.getElementById('ep-'+n+'-'+i+'-1');
     if(!s0||!s1)continue;
     const id0=parseInt(s0.value),id1=parseInt(s1.value);
-    if(id0===id1){toast('⚠️ Same player in both slots of pair '+(i+1));valid=false;break;}
-    if(seen.has(id0)||seen.has(id1)){toast('⚠️ Duplicate player found — each player must appear once');valid=false;break;}
-    seen.add(id0);seen.add(id1);
+    if(cfg.matchPlay){
+      if(seenA.has(id0)){toast('⚠️ Duplicate Team A player in match '+(i+1));valid=false;break;}
+      if(seenB.has(id1)){toast('⚠️ Duplicate Team B player in match '+(i+1));valid=false;break;}
+      seenA.add(id0);seenB.add(id1);
+    } else {
+      if(id0===id1){toast('⚠️ Same player in both slots of pair '+(i+1));valid=false;break;}
+      if(seenAll.has(id0)||seenAll.has(id1)){toast('⚠️ Duplicate player found — each player must appear once');valid=false;break;}
+      seenAll.add(id0);seenAll.add(id1);
+    }
     newPairs.push([id0,id1]);
   }
   if(!valid)return;
-  if(seen.size!==8){toast('⚠️ All 8 players must be assigned');return;}
+  if(cfg.matchPlay){
+    if(seenA.size!==4||seenB.size!==4){toast('⚠️ All 4 Team A and 4 Team B players must be assigned');return;}
+  } else {
+    if(seenAll.size!==8){toast('⚠️ All 8 players must be assigned');return;}
+  }
   const allPairings=getPairings()||{};
   allPairings[n]=newPairs;
   savePairings(allPairings);
@@ -1868,7 +1916,7 @@ function buildScoresCard(n,players){
   const td=getTeeData(n);
   let html=`<div class="card">
     <div class="card-label">⛳ Individual Stableford Scores <span style="font-size:.7rem;font-weight:600;color:var(--gold);">✓ Tour Championship</span></div>
-    <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">HCP = slope-adjusted course handicap. Tap to override for a worldy ⬇️ or nightmare ⬆️.</p>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">${getDayNoSlope(n)?'<span style="color:var(--accent);">No slope — HCP = Handicap Index directly.</span>':'HCP = slope-adjusted course handicap.'} Tap to override for a worldy ⬇️ or nightmare ⬆️.</p>
     <table class="score-tbl"><thead><tr>
       <th style="font-size:.63rem;color:var(--muted);font-weight:700;padding-bottom:6px;">Player</th>
       <th style="font-size:.63rem;color:var(--muted);font-weight:700;padding-bottom:6px;">HCP</th>
@@ -1880,7 +1928,7 @@ function buildScoresCard(n,players){
     const useHcp=ov[p.id]!==undefined?ov[p.id]:calcHcp;
     const isOv=ov[p.id]!==undefined;
     html+=`<tr>
-      <td class="pcell">${p.name}<span style="font-size:.65rem;color:var(--muted);display:block;">HI:${p.hcp} S:${td.slope}</span></td>
+      <td class="pcell">${p.name}<span style="font-size:.65rem;color:var(--muted);display:block;">HI:${p.hcp}${getDayNoSlope(n)?' (no slope)':' S:'+td.slope}</span></td>
       <td>
         <div class="dhcp-cell">
           <input type="number" id="dhcp-${n}-${p.id}" class="dhcp-input${isOv?' ov':''}"
