@@ -764,11 +764,8 @@ const DAY_CONFIG = {
   2: {
     title:'Day 2', emoji:'🔵', course:"O'Connor Jnr. Course", dayName:'Monday', teeTime:'9:30am',
     courseDesc:'Par 72 · Water hazards throughout · Christy O\'Connor Jnr.',
-    format:'4BBB or Skins', tcDay:true, matchPlay:false, color:'var(--blue)', hasFormatChoice:true,
-    formatHow:{
-      '4bbb':'Two pairs go head-to-head across 18 holes. Every player plays their own ball, full handicap applied. On each hole, the <strong style="color:var(--text)">better stableford score from each pair counts</strong>. Win more holes than your opponents to take the match. Front 9, Back 9 and overall match are each worth a separate bet. Individual stableford scores count toward the <strong style="color:var(--text)">Tour Championship</strong>.',
-      'skins':'Each hole is worth one <strong style="color:var(--text)">skin</strong>. The pair who wins a hole outright claims the skin for that hole. If the hole is tied, the skin <strong style="color:var(--text)">carries over</strong> — the next hole is then worth two skins, and so on. Carryovers can make individual holes enormous! The pair with the most skins (or highest cumulative skin value) at the end wins the pot. Individual stableford scores still count toward the <strong style="color:var(--text)">Tour Championship</strong>.',
-    },
+    format:'4BBB', tcDay:true, matchPlay:false, color:'var(--blue)',
+    formatHow:'Two pairs go head-to-head across 18 holes. Every player plays their own ball, full handicap applied. On each hole, the <strong style="color:var(--text)">better stableford score from each pair counts</strong>. Win more holes than your opponents to take the match. Front 9, Back 9 and overall match are each worth a separate bet. Individual stableford scores count toward the <strong style="color:var(--text)">Tour Championship</strong>.',
     courseUrl:'https://www.amendoeiraresort.com/en/golf/',
     scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf',
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
@@ -792,8 +789,8 @@ const DAY_CONFIG = {
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
   },
   5: {
-    title:'Day 5', emoji:'🎉', course:"O'Connor 10", dayName:'Thursday', teeTime:'TBC',
-    courseDesc:"Par 72 · Christy O'Connor Jnr. Course (10-hole layout) · Fun Day",
+    title:'Day 5', emoji:'🎉', course:"O'Connor Jnr. Course", dayName:'Thursday', teeTime:'10:00am',
+    courseDesc:"Par 72 · Christy O'Connor Jnr. Course · Fun Day",
     format:'TBD', tcDay:false, matchPlay:false, funDay:true, color:'var(--muted)',
     formatHow:'Format yet to be decided — watch this space! Not everyone may play. No Tour Championship points today.',
     courseUrl:'https://www.amendoeiraresort.com/en/golf/',
@@ -1477,7 +1474,7 @@ function renderDay(n){
   const howToText=typeof cfg.formatHow==='string'?cfg.formatHow:(cfg.formatHow?cfg.formatHow[fmt2]:'');
   if(howToText){
     html+=`<div class="how-to-play" id="day${n}-format-desc">
-      <span class="how-to-play-label" style="color:${cfg.color};">📖 How to Play — ${n===2&&fmt2==='skins'?'Skins':cfg.format.split(' or ')[0]}</span>
+      <span class="how-to-play-label" style="color:${cfg.color};">📖 How to Play — ${cfg.format.split(' or ')[0]}</span>
       ${howToText}
     </div>`;
   }
@@ -1733,24 +1730,7 @@ function buildResultsCard(n,pairings,pMap,players,cfg){
   }
   const pairs=pairings[n];
 
-  if(n===2&&cfg.hasFormatChoice){
-    // Format selector
-    const fmt=getDayResult(2,'format')||'4bbb';
-    html+=`<div class="result-section">
-      <div class="result-section-title">Day 2 Format</div>
-      <div class="format-choice">
-        <button class="format-pill${fmt==='4bbb'?' sel':''}" onclick="setDay2Format('4bbb')">4BBB</button>
-        <button class="format-pill${fmt==='skins'?' sel':''}" onclick="setDay2Format('skins')">Skins</button>
-      </div>
-    </div>
-    <div id="day2-results-inner">`;
-    if(fmt==='skins'){
-      html+=buildSkinsResults(players);
-    } else {
-      html+=build4BBBResults(pairs,pMap,n);
-    }
-    html+=`</div>`;
-  } else if(cfg.matchPlay){
+  if(cfg.matchPlay){
     html+=buildMatchPlayResults(pairs,pMap,players,n);
   } else if(cfg.isScramble){
     html+=buildScrambleResults(pairs,pMap,players,n);
