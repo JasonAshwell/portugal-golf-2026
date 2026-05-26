@@ -1561,7 +1561,7 @@ function buildPairingsCard(n,pairings,pMap,players,cfg){
     html+=buildGroupPairs(n,pairs,pMap,cfg,0);//4-ball 1
     html+=buildGroupPairs(n,pairs,pMap,cfg,1);//4-ball 2
     // Edit form (hidden by default)
-    html+=buildEditPairsForm(n,players);
+    html+=buildEditPairsForm(n,players,pairings);
   }
   html+=`</div>`;
   return html;
@@ -1616,43 +1616,60 @@ function buildGroupPairs(n,pairs,pMap,cfg,grpIdx){
   return html;
 }
 
-function buildEditPairsForm(n,players){
+function buildEditPairsForm(n,players,pairings){
   const cfg=DAY_CONFIG[n];
-  const teams=getTeams()||{A:[],B:[]};
+  const pairs=pairings&&pairings[n];
+  if(!pairs)return`<div class="edit-pair-form" id="edit-pairs-form-${n}" style="display:none;"></div>`;
+  const pMap=playerMap();
   const names=getTeamNames();
-  const teamASet=new Set(teams.A||[]);
-  const teamBSet=new Set(teams.B||[]);
-  const optsA=players.filter(p=>teamASet.has(p.id)).map(p=>`<option value="${p.id}">${p.name} (${p.hcp})</option>`).join('');
-  const optsB=players.filter(p=>teamBSet.has(p.id)).map(p=>`<option value="${p.id}">${p.name} (${p.hcp})</option>`).join('');
   const tA=names.A||'Team A', tB=names.B||'Team B';
+  // Partner pair lookup for Days 1-3: 0↔1, 2↔3
+  const partnerPair=[1,0,3,2];
+  // Labels for each pair
+  const pairLabel=i=>i<2?`${tA} / Pair ${i+1}`:`${tB} / Pair ${i-1}`;
+
   let html=`<div class="edit-pair-form" id="edit-pairs-form-${n}" style="display:none;margin-top:10px;">
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Reassign players. No duplicates allowed.</div>`;
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Select Swap… next to a player to switch them with someone else.</div>`;
+
   if(cfg.matchPlay){
-    // Day 4: 4 individual matches — first slot = Team A, second slot = Team B
+    // Day 4: 4 cross-team matches — swap A players among A slots, B players among B slots
     [0,1,2,3].forEach(i=>{
+      const idA=pairs[i][0],idB=pairs[i][1];
+      const pA=pMap[idA],pB=pMap[idB];
+      if(!pA||!pB)return;
+      const swapOptsA=[0,1,2,3].filter(j=>j!==i).map(j=>{const p=pMap[pairs[j][0]];return p?`<option value="${pairs[j][0]}">⇄ ${p.name}</option>`:''}).join('');
+      const swapOptsB=[0,1,2,3].filter(j=>j!==i).map(j=>{const p=pMap[pairs[j][1]];return p?`<option value="${pairs[j][1]}">⇄ ${p.name}</option>`:''}).join('');
       html+=`<div class="edit-pair-row">
         <span class="edit-pair-label">Match ${i+1}</span>
-        <select class="edit-pair-sel" id="ep-${n}-${i}-0" title="${tA}">${optsA}</select>
-        <span class="edit-pair-amp" style="color:var(--red);font-weight:800;">VS</span>
-        <select class="edit-pair-sel" id="ep-${n}-${i}-1" title="${tB}">${optsB}</select>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-weight:600;font-size:.82rem;">${pA.name}</span>
+          <select class="t2move" onchange="swapPairingPlayer(${n},${i},0,parseInt(this.value));this.selectedIndex=0;"><option value="">Swap…</option>${swapOptsA}</select>
+          <span style="color:var(--red);font-weight:800;font-size:.75rem;">VS</span>
+          <span style="font-weight:600;font-size:.82rem;">${pB.name}</span>
+          <select class="t2move" onchange="swapPairingPlayer(${n},${i},1,parseInt(this.value));this.selectedIndex=0;"><option value="">Swap…</option>${swapOptsB}</select>
+        </div>
       </div>`;
     });
   } else {
-    // Days 1-3: same-team pairs
-    const labels=[`${tA} / Pair 1`,`${tA} / Pair 2`,`${tB} / Pair 1`,`${tB} / Pair 2`];
+    // Days 1-3: same-team pairs — swap within Team A (pairs 0↔1) or Team B (pairs 2↔3)
     [0,1,2,3].forEach(i=>{
-      const opts=i<2?optsA:optsB;
-      html+=`<div class="edit-pair-row">
-        <span class="edit-pair-label">${labels[i]}</span>
-        <select class="edit-pair-sel" id="ep-${n}-${i}-0">${opts}</select>
-        <span class="edit-pair-amp">&amp;</span>
-        <select class="edit-pair-sel" id="ep-${n}-${i}-1">${opts}</select>
-      </div>`;
+      const pp=partnerPair[i];
+      const pair=pairs[i];
+      html+=`<div class="edit-pair-row"><span class="edit-pair-label">${pairLabel(i)}</span><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">`;
+      [0,1].forEach(slot=>{
+        const id=pair[slot];
+        const p=pMap[id];if(!p)return;
+        // Swap options: both players in the partner pair
+        const swapOpts=[0,1].map(s=>{const op=pMap[pairs[pp][s]];return op?`<option value="${pairs[pp][s]}">⇄ ${op.name}</option>`:''}).join('');
+        html+=`<span style="font-weight:600;font-size:.82rem;">${p.name}</span>
+          <select class="t2move" onchange="swapPairingPlayer(${n},${i},${slot},parseInt(this.value));this.selectedIndex=0;"><option value="">Swap…</option>${swapOpts}</select>`;
+        if(slot===0)html+=`<span style="color:var(--muted);font-size:.75rem;">&amp;</span>`;
+      });
+      html+=`</div></div>`;
     });
   }
   html+=`<div class="fl">
-    <button class="btn btn-sm" onclick="saveEditPairings(${n})">💾 Save Pairings</button>
-    <button class="btn btn-ghost btn-sm" onclick="cancelEditPairings(${n})">Cancel</button>
+    <button class="btn btn-ghost btn-sm" onclick="cancelEditPairings(${n})">✕ Done</button>
   </div></div>`;
   return html;
 }
@@ -1663,18 +1680,8 @@ function toggleEditPairings(n){
   const btn=document.getElementById('edit-pairs-btn-'+n);
   if(!form)return;
   if(form.style.display==='none'){
-    // Populate selects with current pairings
-    const pairings=getPairings();
-    if(pairings&&pairings[n]){
-      pairings[n].forEach((ids,i)=>{
-        ids.forEach((id,j)=>{
-          const sel=document.getElementById('ep-'+n+'-'+i+'-'+j);
-          if(sel)sel.value=id;
-        });
-      });
-    }
     form.style.display='block';
-    if(btn)btn.textContent='✕ Cancel';
+    if(btn)btn.textContent='✕ Done';
     editingDay=n;
   } else {
     cancelEditPairings(n);
@@ -1689,39 +1696,32 @@ function cancelEditPairings(n){
   editingDay=null;
 }
 
-function saveEditPairings(n){
-  const cfg=DAY_CONFIG[n];
-  const newPairs=[];
-  const seenA=new Set(),seenB=new Set(),seenAll=new Set();
-  let valid=true;
-  for(let i=0;i<4;i++){
-    const s0=document.getElementById('ep-'+n+'-'+i+'-0');
-    const s1=document.getElementById('ep-'+n+'-'+i+'-1');
-    if(!s0||!s1)continue;
-    const id0=parseInt(s0.value),id1=parseInt(s1.value);
-    if(cfg.matchPlay){
-      if(seenA.has(id0)){toast('⚠️ Duplicate Team A player in match '+(i+1));valid=false;break;}
-      if(seenB.has(id1)){toast('⚠️ Duplicate Team B player in match '+(i+1));valid=false;break;}
-      seenA.add(id0);seenB.add(id1);
-    } else {
-      if(id0===id1){toast('⚠️ Same player in both slots of pair '+(i+1));valid=false;break;}
-      if(seenAll.has(id0)||seenAll.has(id1)){toast('⚠️ Duplicate player found — each player must appear once');valid=false;break;}
-      seenAll.add(id0);seenAll.add(id1);
-    }
-    newPairs.push([id0,id1]);
-  }
-  if(!valid)return;
-  if(cfg.matchPlay){
-    if(seenA.size!==4||seenB.size!==4){toast('⚠️ All 4 Team A and 4 Team B players must be assigned');return;}
-  } else {
-    if(seenAll.size!==8){toast('⚠️ All 8 players must be assigned');return;}
-  }
+function swapPairingPlayer(n,fromPair,fromSlot,targetId){
+  if(isNaN(targetId))return;
   const allPairings=getPairings()||{};
-  allPairings[n]=newPairs;
+  const pairs=allPairings[n];
+  if(!pairs)return;
+  const fromId=pairs[fromPair][fromSlot];
+  // Find where targetId currently lives
+  let toPair=-1,toSlot=-1;
+  outer:for(let i=0;i<pairs.length;i++){
+    for(let j=0;j<pairs[i].length;j++){
+      if(pairs[i][j]===targetId){toPair=i;toSlot=j;break outer;}
+    }
+  }
+  if(toPair===-1){toast('⚠️ Player not found');return;}
+  pairs[fromPair][fromSlot]=targetId;
+  pairs[toPair][toSlot]=fromId;
+  allPairings[n]=pairs;
   savePairings(allPairings);
-  cancelEditPairings(n);
   renderDay(n);
-  toast('Pairings saved ✅');
+  // Re-open edit panel after re-render
+  const form=document.getElementById('edit-pairs-form-'+n);
+  const btn=document.getElementById('edit-pairs-btn-'+n);
+  if(form){form.style.display='block';}
+  if(btn)btn.textContent='✕ Done';
+  editingDay=n;
+  toast('⇄ Swapped ✅');
 }
 
 // ─── Results card ────────────────────────────────────
