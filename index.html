@@ -1389,7 +1389,6 @@ function renderTeams(){
     return;
   }
   const pMap={};players.forEach((p,i)=>pMap[p.id]={...p,idx:i});
-  const names=getTeamNames();
 
   function confSummary(ids){
     let h=0,m=0,l=0;
