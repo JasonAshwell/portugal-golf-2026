@@ -99,6 +99,23 @@
     .prize-who{flex:1;font-weight:700;}
     .prize-amt{font-weight:900;font-size:1.1rem;color:var(--gold);}
 
+    /* ─── PHOTOS ───────────────────────────────── */
+    .photo-day-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.78rem;font-weight:700;transition:all .15s;}
+    .photo-day-btn.active{background:var(--accent);border-color:var(--accent);color:#000;}
+    .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+    @media(max-width:480px){.photo-grid{grid-template-columns:repeat(2,1fr);}}
+    .photo-thumb{position:relative;aspect-ratio:1;overflow:hidden;border-radius:8px;cursor:pointer;background:var(--bg3);}
+    .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s;}
+    .photo-thumb:hover img{transform:scale(1.04);}
+    .photo-thumb-caption{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:20px 6px 5px;font-size:.65rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .comment-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.82rem;}
+    .comment-row:last-child{border-bottom:none;}
+    .comment-author{font-weight:700;color:var(--accent);white-space:nowrap;}
+    .comment-text{flex:1;color:var(--text);line-height:1.45;}
+    .comment-del{color:var(--muted);cursor:pointer;font-size:.75rem;padding:0 4px;align-self:flex-start;}
+    .comment-del:hover{color:var(--red);}
+    .photo-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:.88rem;}
+
     /* ─── FORM ──────────────────────────────────── */
     .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:9px;}
     .fl-label{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
@@ -457,6 +474,7 @@
     <button class="nav-btn" onclick="show('day3',this)">📅 Day 3</button>
     <button class="nav-btn" onclick="show('day4',this)">📅 Day 4</button>
     <button class="nav-btn" onclick="show('day5',this)">🎉 Day 5</button>
+    <button class="nav-btn" onclick="show('photos',this)">📸 Photos</button>
     <button class="nav-btn" onclick="show('prizes',this)">💰 Prizes</button>
     <button class="nav-btn" onclick="show('logistics',this)">🧳 Logistics</button>
     <div class="sync-wrap" id="sync-wrap" title="Tap for sync help" style="display:none;cursor:pointer;" onclick="showSyncHelp()">
@@ -591,6 +609,54 @@
   <div id="tab-day3" class="tab"><div id="day3-content"></div></div>
   <div id="tab-day4" class="tab"><div id="day4-content"></div></div>
   <div id="tab-day5" class="tab"><div id="day5-content"></div></div>
+
+  <!-- ══════════════════════════════════ PHOTOS -->
+  <div id="tab-photos" class="tab">
+    <div class="page">
+      <div class="sh">📸 Trip Photos</div>
+
+      <!-- Day selector -->
+      <div id="photos-day-nav" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+
+      <!-- Upload bar -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">
+        <button class="btn btn-sm" onclick="document.getElementById('photo-file-input').click()">📷 Add Photos</button>
+        <span id="photo-upload-status" style="font-size:.8rem;color:var(--muted);"></span>
+      </div>
+
+      <!-- Gallery -->
+      <div id="photos-gallery"></div>
+    </div>
+  </div>
+
+  <!-- Photo lightbox modal -->
+  <div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;overflow-y:auto;">
+    <div style="max-width:680px;margin:0 auto;padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span id="photo-modal-day" style="font-size:.75rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);"></span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm" style="background:rgba(255,82,82,.15);color:var(--red);border-color:rgba(255,82,82,.3);" onclick="deleteCurrentPhoto()">🗑 Delete</button>
+          <button class="btn btn-sm" onclick="closePhotoModal()">✕ Close</button>
+        </div>
+      </div>
+      <img id="photo-modal-img" style="width:100%;border-radius:10px;display:block;max-height:65vh;object-fit:contain;background:#000;">
+      <p id="photo-modal-caption" style="font-size:.78rem;color:var(--muted);margin:8px 0 16px;"></p>
+
+      <!-- Comments -->
+      <div style="margin-top:8px;">
+        <div class="card-label" style="margin-bottom:10px;">💬 Comments</div>
+        <div id="photo-modal-comments" style="margin-bottom:14px;"></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <input id="comment-author" class="score-input" style="width:100%;max-width:200px;" placeholder="Your name" oninput="localStorage.setItem('amd_photo_author',this.value)">
+          <div style="display:flex;gap:8px;">
+            <input id="comment-text" class="score-input" style="flex:1;" placeholder="Add a comment…" onkeydown="if(event.key==='Enter')submitComment()">
+            <button class="btn btn-sm" onclick="submitComment()">Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════ PRIZES -->
   <div id="tab-prizes" class="tab">
@@ -874,6 +940,27 @@ let logNextId = 100;
 // ═══════════════════════════════════════════════════
 const FIREBASE_URL = 'https://golf-2026-4fe36-default-rtdb.firebaseio.com';  // ← paste your database URL here
 
+// ═══════════════════════════════════════════════════
+// FIREBASE STORAGE — for photo uploads
+//
+//  1. Go to https://console.firebase.google.com
+//     → Your project → Build → Storage → Get started
+//     → Start in test mode → Done
+//  2. In Storage Rules tab, paste:
+//       rules_version = '2';
+//       service firebase.storage {
+//         match /b/{bucket}/o {
+//           match /{allPaths=**} {
+//             allow read, write: if true;
+//           }
+//         }
+//       }
+//  3. The bucket name below is auto-derived from your project ID.
+//     If uploads fail, check the Firebase Storage bucket name in the console.
+// ═══════════════════════════════════════════════════
+const STORAGE_BUCKET = 'golf-2026-4fe36.appspot.com';
+const STORAGE_BASE   = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o`;
+
 const SYNC_KEYS  = Object.values(K);
 const FB_BASE    = FIREBASE_URL.replace(/\/+$/, '');  // strip any trailing slash
 const fbReady    = typeof FIREBASE_URL === 'string' && FIREBASE_URL.includes('firebaseio.com');
@@ -995,6 +1082,7 @@ function refreshCurrentTab(){
   else if(id==='day3')renderDay(3);
   else if(id==='day4')renderDay(4);
   else if(id==='day5')renderDay(5);
+  else if(id==='photos')renderPhotos();
   else if(id==='logistics')renderLogistics();
   syncLeader();
 }
@@ -1199,6 +1287,7 @@ function show(name,btn){
   if(name==='day3')renderDay(3);
   if(name==='day4')renderDay(4);
   if(name==='day5')renderDay(5);
+  if(name==='photos')renderPhotos();
   if(name==='logistics')renderLogistics();
 }
 
@@ -2949,6 +3038,249 @@ function buildAiSummaryCard(n){
     <div id="ai-summary-body-${n}">${content}</div>
   </div>`;
 }
+
+// ═══════════════════════════════════════════════════
+// PHOTOS
+// ═══════════════════════════════════════════════════
+
+let currentPhotoDay = 1;
+let currentPhotoId  = null;
+let allPhotos       = {};   // { day1: { id: {url,path,uploader,ts,comments:{}} } }
+
+// ── Firebase helpers ──────────────────────────────
+async function fbPhotosGet(){
+  try{
+    const res=await fetch(`${FB_BASE}/photos.json`);
+    if(!res.ok)return{};
+    const d=await res.json();
+    return d||{};
+  }catch(e){return{};}
+}
+
+async function fbPhotosPost(day,data){
+  // POST returns Firebase push ID under name key
+  const res=await fetch(`${FB_BASE}/photos/day${day}.json`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+  const d=await res.json();
+  return d.name; // push ID
+}
+
+async function fbPhotoDelete(day,photoId){
+  await fetch(`${FB_BASE}/photos/day${day}/${photoId}.json`,{method:'DELETE'});
+}
+
+async function fbCommentPost(day,photoId,data){
+  const res=await fetch(`${FB_BASE}/photos/day${day}/${photoId}/comments.json`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+  const d=await res.json();
+  return d.name;
+}
+
+async function fbCommentDelete(day,photoId,commentId){
+  await fetch(`${FB_BASE}/photos/day${day}/${photoId}/comments/${commentId}.json`,{method:'DELETE'});
+}
+
+// ── Image compression ─────────────────────────────
+function compressImage(file,maxW=1400,quality=0.82){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(b=>resolve(b),'image/jpeg',quality);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Firebase Storage upload / delete ─────────────
+async function storageUpload(blob,path){
+  const url=`${STORAGE_BASE}?uploadType=media&name=${encodeURIComponent(path)}`;
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'image/jpeg'},body:blob});
+  if(!res.ok)throw new Error(`Storage upload failed: ${res.status}`);
+  const d=await res.json();
+  return`${STORAGE_BASE}/${encodeURIComponent(path)}?alt=media&token=${d.downloadTokens}`;
+}
+
+async function storageDelete(path){
+  await fetch(`${STORAGE_BASE}/${encodeURIComponent(path)}`,{method:'DELETE'});
+}
+
+// ── Upload handler ────────────────────────────────
+async function handlePhotoUpload(event){
+  const files=[...event.target.files];
+  if(!files.length)return;
+  const status=document.getElementById('photo-upload-status');
+  const uploader=localStorage.getItem('amd_photo_author')||'Anonymous';
+  let done=0;
+  for(const file of files){
+    status.textContent=`Uploading ${done+1} of ${files.length}…`;
+    try{
+      const blob=await compressImage(file);
+      const path=`photos/day${currentPhotoDay}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+      const url=await storageUpload(blob,path);
+      await fbPhotosPost(currentPhotoDay,{url,path,uploader,ts:Date.now(),comments:null});
+      done++;
+    }catch(e){
+      toast(`❌ Upload failed: ${e.message}`);
+    }
+  }
+  event.target.value='';
+  status.textContent=done===files.length?`✅ ${done} photo${done>1?'s':''} uploaded`:`⚠️ ${done}/${files.length} uploaded`;
+  setTimeout(()=>{status.textContent='';},3000);
+  await loadAndRenderPhotos();
+}
+
+// ── Load & render ─────────────────────────────────
+async function loadAndRenderPhotos(){
+  allPhotos=await fbPhotosGet();
+  renderPhotoGallery();
+}
+
+function renderPhotos(){
+  // Build day nav
+  const nav=document.getElementById('photos-day-nav');
+  if(nav){
+    nav.innerHTML=[1,2,3,4,5].map(n=>{
+      const cfg=DAY_CONFIG[n];
+      return`<button class="photo-day-btn${currentPhotoDay===n?' active':''}" onclick="switchPhotoDay(${n})">${cfg.emoji} ${cfg.title}</button>`;
+    }).join('');
+  }
+  // Restore saved author name
+  const authorEl=document.getElementById('comment-author');
+  if(authorEl)authorEl.value=localStorage.getItem('amd_photo_author')||'';
+  loadAndRenderPhotos();
+}
+
+function switchPhotoDay(n){
+  currentPhotoDay=n;
+  // Update nav pills
+  document.querySelectorAll('.photo-day-btn').forEach((b,i)=>b.classList.toggle('active',i+1===n));
+  renderPhotoGallery();
+}
+
+function renderPhotoGallery(){
+  const gallery=document.getElementById('photos-gallery');
+  if(!gallery)return;
+  const dayKey=`day${currentPhotoDay}`;
+  const dayPhotos=allPhotos[dayKey]||{};
+  const items=Object.entries(dayPhotos).sort((a,b)=>a[1].ts-b[1].ts);
+
+  if(!items.length){
+    gallery.innerHTML=`<div class="photo-empty">📷 No photos yet for ${DAY_CONFIG[currentPhotoDay].title}<br><span style="font-size:.75rem;">Tap Add Photos above to upload</span></div>`;
+    return;
+  }
+
+  gallery.innerHTML=`<div class="photo-grid">${items.map(([id,p])=>{
+    const commentCount=p.comments?Object.keys(p.comments).length:0;
+    const badge=commentCount?`<span style="position:absolute;top:5px;right:5px;background:var(--accent);color:#000;font-size:.6rem;font-weight:900;padding:2px 5px;border-radius:8px;">💬 ${commentCount}</span>`:'';
+    const caption=p.uploader&&p.uploader!=='Anonymous'?`<div class="photo-thumb-caption">${p.uploader}</div>`:'';
+    return`<div class="photo-thumb" onclick="openPhotoModal('${id}',${currentPhotoDay})">
+      <img src="${p.url}" loading="lazy" alt="photo">
+      ${badge}
+      ${caption}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── Modal ─────────────────────────────────────────
+function openPhotoModal(photoId,day){
+  currentPhotoId={id:photoId,day};
+  const dayKey=`day${day}`;
+  const photo=allPhotos[dayKey]?.[photoId];
+  if(!photo)return;
+
+  document.getElementById('photo-modal-img').src=photo.url;
+  document.getElementById('photo-modal-day').textContent=`${DAY_CONFIG[day].emoji} ${DAY_CONFIG[day].title} · ${DAY_CONFIG[day].dayName}`;
+  const d=new Date(photo.ts);
+  document.getElementById('photo-modal-caption').textContent=
+    `Uploaded by ${photo.uploader||'Anonymous'} · ${d.toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`;
+
+  renderModalComments(photo.comments||{});
+  document.getElementById('photo-modal').style.display='block';
+  document.body.style.overflow='hidden';
+}
+
+function closePhotoModal(){
+  document.getElementById('photo-modal').style.display='none';
+  document.body.style.overflow='';
+  currentPhotoId=null;
+}
+
+function renderModalComments(comments){
+  const el=document.getElementById('photo-modal-comments');
+  const entries=Object.entries(comments).sort((a,b)=>a[1].ts-b[1].ts);
+  if(!entries.length){
+    el.innerHTML=`<p style="font-size:.8rem;color:var(--muted);">No comments yet — be the first!</p>`;
+    return;
+  }
+  el.innerHTML=entries.map(([cid,c])=>`
+    <div class="comment-row">
+      <span class="comment-author">${c.name||'Anonymous'}:</span>
+      <span class="comment-text">${c.text}</span>
+      <span class="comment-del" onclick="deleteComment('${cid}')" title="Delete">✕</span>
+    </div>`).join('');
+}
+
+async function submitComment(){
+  if(!currentPhotoId)return;
+  const textEl=document.getElementById('comment-text');
+  const authorEl=document.getElementById('comment-author');
+  const text=textEl.value.trim();
+  const name=authorEl.value.trim()||'Anonymous';
+  if(!text)return;
+  localStorage.setItem('amd_photo_author',name);
+  textEl.value='';
+  const {id,day}=currentPhotoId;
+  await fbCommentPost(day,id,{text,name,ts:Date.now()});
+  // Refresh modal comments
+  allPhotos=await fbPhotosGet();
+  const photo=allPhotos[`day${day}`]?.[id];
+  if(photo)renderModalComments(photo.comments||{});
+}
+
+async function deleteComment(commentId){
+  if(!currentPhotoId)return;
+  if(!confirm('Delete this comment?'))return;
+  const {id,day}=currentPhotoId;
+  await fbCommentDelete(day,id,commentId);
+  allPhotos=await fbPhotosGet();
+  const photo=allPhotos[`day${day}`]?.[id];
+  if(photo)renderModalComments(photo.comments||{});
+}
+
+async function deleteCurrentPhoto(){
+  if(!currentPhotoId)return;
+  if(!confirm('Delete this photo? This cannot be undone.'))return;
+  const {id,day}=currentPhotoId;
+  const photo=allPhotos[`day${day}`]?.[id];
+  if(photo?.path){
+    try{await storageDelete(photo.path);}catch(e){}
+  }
+  await fbPhotoDelete(day,id);
+  closePhotoModal();
+  allPhotos=await fbPhotosGet();
+  renderPhotoGallery();
+  toast('Photo deleted');
+}
+
+// Close modal on backdrop click
+document.getElementById('photo-modal').addEventListener('click',function(e){
+  if(e.target===this)closePhotoModal();
+});
 
 // ── Debug helper (open browser console and type: debugGolf()) ──────
 window.debugGolf=function(){
