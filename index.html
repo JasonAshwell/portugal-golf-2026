@@ -2863,7 +2863,10 @@ function buildAiSummaryCard(n){
     :`<p style="font-size:.82rem;color:var(--muted);">Hit Generate to get an AI-written humorous take on the day — the more scores and results you've entered, the better!</p>`;
   return`<div class="card" id="ai-summary-card-${n}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="card-label" style="margin-bottom:0;">🤣 Day Summary</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="card-label" style="margin-bottom:0;">🤣 Day Summary</div>
+        <button class="btn btn-sm" style="font-size:.65rem;padding:2px 7px;opacity:.6;" onclick="showWorkerSetup()" title="Configure AI settings">⚙</button>
+      </div>
       <button class="btn btn-sm" id="ai-summary-btn-${n}" onclick="generateDaySummary(${n})">${btnLabel}</button>
     </div>
     <div id="ai-summary-body-${n}">${content}</div>
