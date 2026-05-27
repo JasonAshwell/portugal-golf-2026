@@ -978,7 +978,7 @@ function refreshCurrentTab(){
   const id = activeTab.id.replace('tab-','');
   if(id==='players'){renderPlayerTable();renderTeams();renderPairingsPreview();}
   else if(id==='leaderboard')renderLeaderboard();
-  else if(id==='prizes'){renderPrizes();renderDailyWinnersSummary();}
+  else if(id==='prizes'){try{renderPrizes();}catch(e){console.error('[Prizes] renderPrizes error:',e);}try{renderDailyWinnersSummary();}catch(e){console.error('[Prizes] renderDailyWinnersSummary error:',e);}}
   else if(id==='day1')renderDay(1);
   else if(id==='day2')renderDay(2);
   else if(id==='day3')renderDay(3);
@@ -1182,7 +1182,7 @@ function show(name,btn){
   btn.classList.add('active');
   if(name==='players'){renderPlayerTable();renderTeams();renderPairingsPreview();}
   if(name==='leaderboard')renderLeaderboard();
-  if(name==='prizes'){renderPrizes();renderDailyWinnersSummary();}
+  if(name==='prizes'){try{renderPrizes();}catch(e){console.error('[Prizes] renderPrizes error:',e);}try{renderDailyWinnersSummary();}catch(e){console.error('[Prizes] renderDailyWinnersSummary error:',e);}}
   if(name==='day1')renderDay(1);
   if(name==='day2')renderDay(2);
   if(name==='day3')renderDay(3);
@@ -1450,6 +1450,11 @@ function renderDay(n){
   const container=document.getElementById('day'+n+'-content');
   if(!container)return;
   const cfg=DAY_CONFIG[n];
+  // Clean up any stale 'skins' format from Day 2 (skins removed from Day 2 format options)
+  if(n===2){
+    const r=getDayResults();
+    if(r[2]&&r[2].format==='skins'){delete r[2].format;lss(K.results,r);}
+  }
   const pairings=getPairings();
   const players=getPlayers();
   const pMap=playerMap();
@@ -2029,9 +2034,6 @@ function calculateWinnings(){
     } else if(cfg.isScramble){
       // Scramble: winning pair gets €10/person
       addPair(dayData.scramble_winner,n,10);
-    } else if(n===2&&dayData.format==='skins'){
-      // Skins day: winner gets €20
-      addPlayer(dayData.skins_winner,n,20);
     } else {
       // 4BBB: F9, B9, Match = €1/person each
       [1,2].forEach(g=>{
@@ -2091,17 +2093,24 @@ function renderWinningsTable(){
 }
 
 function renderDailyWinnersSummary(){
+  console.log('[Summary] renderDailyWinnersSummary called');
   const body=document.getElementById('daily-winners-body');
-  if(!body)return;
+  console.log('[Summary] body element:', body);
+  if(!body){console.warn('[Summary] daily-winners-body not found in DOM!');return;}
   const all=getDayResults();
   const pMap=playerMap();
   const pairings=getPairings();
   let hasData=false;
   let html='';
 
+  // Debug: log what we see for all days
+  console.log('[Summary] Day results loaded:',JSON.stringify(all));
+  console.log('[Summary] Day 2 data:',all[2],typeof all[2]);
+
   [1,2,3,4].forEach(n=>{
     const cfg=DAY_CONFIG[n];
     const dayData=all[n];
+    console.log(`[Summary] Day ${n} dayData:`,dayData,Object.keys(dayData||{}).length,'keys');
     if(!dayData||Object.keys(dayData).length===0)return;
     hasData=true;
     html+=`<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
@@ -2123,9 +2132,7 @@ function renderDailyWinnersSummary(){
 
     // Show key results
     const entries=[];
-    if(n===2&&dayData.format==='skins'){
-      if(dayData.skins_winner)entries.push(['🏆 Skins Winner',playerLabel(dayData.skins_winner)]);
-    } else if(cfg.matchPlay){
+    if(cfg.matchPlay){
       [0,1,2,3].forEach(i=>{
         const v=dayData['m'+i];
         if(v&&pairs&&pairs[i]){
@@ -2543,6 +2550,19 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ── Debug helper (open browser console and type: debugGolf()) ──────
+window.debugGolf=function(){
+  const r=getDayResults();
+  const p=getPairings();
+  console.group('🏌️ Portugal Golf Debug');
+  console.log('Day Results (all):', JSON.parse(JSON.stringify(r)));
+  console.log('Day 2 Results:', r[2]||'(none)');
+  console.log('Day 2 Pairings:', p&&p[2]?p[2]:'(none)');
+  console.log('Player map:', playerMap());
+  console.groupEnd();
+  return{results:r,pairings:p};
+};
 </script>
 </body>
 </html>
