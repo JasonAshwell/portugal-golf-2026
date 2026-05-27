@@ -836,6 +836,8 @@ const K = {
   tees:     'amd_tees_v1',
   hcpov:    'amd_hcpov_v1',
   noSlope:  'amd_noslope_v1',
+  summaries:'amd_summaries_v1',
+  aikey:    'amd_aikey_v1',
 };
 
 const DEFAULT_LOGISTICS = [
@@ -1072,7 +1074,7 @@ function getDayResult(day,field){
 // ═══════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════
-function effHcp(p){if(p.confidence==='high')return Math.max(0,p.hcp-2);if(p.confidence==='low')return p.hcp+3;return p.hcp;}
+function effHcp(p){if(p.confidence==='high')return Math.max(0,p.hcp-1);if(p.confidence==='low')return p.hcp+1;return p.hcp;}
 function confClass(c){return c==='high'?'cbtn-high':c==='low'?'cbtn-low':'cbtn-med';}
 function confLabel(c){return c==='high'?'🟢 Plays to HCP':c==='low'?'🔴 Might Struggle':'🟡 Close to HCP';}
 function badgeClass(c){return c==='high'?'cbadge-high':c==='low'?'cbadge-low':'cbadge-med';}
@@ -1539,6 +1541,9 @@ function renderDay(n){
   if(cfg.tcDay){
     html+=buildScoresCard(n,players);
   }
+
+  // AI summary card
+  html+=buildAiSummaryCard(n);
 
   container.innerHTML=html;
   // Set saved values in selects/inputs
@@ -2668,6 +2673,200 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ═══════════════════════════════════════════════════
+// AI DAY SUMMARIES
+// ═══════════════════════════════════════════════════
+function getSummaries(){return ls(K.summaries,{});}
+function saveSummary(n,text){const s=getSummaries();s[n]=text;lss(K.summaries,s);}
+function getAiKey(){return ls(K.aikey,'');}
+function saveAiKey(k){lss(K.aikey,k);}
+
+function buildAiContext(n){
+  const players=getPlayers();
+  const pMap=playerMap();
+  const pairings=getPairings();
+  const allResults=getDayResults();
+  const allScores=getScores();
+  const teams=getTeams();
+  const names=getTeamNames();
+  const cfg=DAY_CONFIG[n];
+
+  let ctx=`PORTUGAL GOLF TRIP 2026 — ${cfg.dayName} (${cfg.title}: ${cfg.course})\n`;
+  ctx+=`Format: ${cfg.format}\n\n`;
+
+  // Teams
+  if(teams){
+    ctx+=`TEAMS:\n`;
+    ['A','B'].forEach(t=>{
+      const tPlayers=(teams[t]||[]).map(id=>pMap[id]?pMap[id].name:'?').join(', ');
+      ctx+=`  ${names[t]||'Team '+t}: ${tPlayers}\n`;
+    });
+    ctx+='\n';
+  }
+
+  // Today's pairings
+  if(pairings&&pairings[n]){
+    const pairs=pairings[n];
+    ctx+=`TODAY'S PAIRINGS:\n`;
+    if(cfg.matchPlay){
+      pairs.forEach((p,i)=>{
+        const p0=pMap[p[0]],p1=pMap[p[1]];
+        if(p0&&p1)ctx+=`  Match ${i+1}: ${p0.name} (HCP ${p0.hcp}) vs ${p1.name} (HCP ${p1.hcp})\n`;
+      });
+    } else {
+      [0,1].forEach(g=>{
+        const tA=pairs[g],tB=pairs[g+2];
+        if(tA&&tB){
+          const an=tA.map(id=>pMap[id]?pMap[id].name:'?').join(' & ');
+          const bn=tB.map(id=>pMap[id]?pMap[id].name:'?').join(' & ');
+          ctx+=`  Group ${g+1}: ${an} vs ${bn}\n`;
+        }
+      });
+    }
+    ctx+='\n';
+  }
+
+  // Today's scores
+  const todayScores=allScores[n]||{};
+  if(Object.keys(todayScores).length>0){
+    ctx+=`TODAY'S STABLEFORD SCORES (${cfg.title}):\n`;
+    const sorted=players.map(p=>({...p,sc:todayScores[p.id]??null})).filter(p=>p.sc!==null).sort((a,b)=>b.sc-a.sc);
+    sorted.forEach(p=>ctx+=`  ${p.name} (HCP ${p.hcp}): ${p.sc} pts\n`);
+    if(sorted.length>0)ctx+=`  Top scorer: ${sorted[0].name} with ${sorted[0].sc} pts\n`;
+    ctx+='\n';
+  }
+
+  // Today's match results
+  const dayRes=allResults[n]||{};
+  if(Object.keys(dayRes).length>0){
+    ctx+=`TODAY'S MATCH RESULTS:\n`;
+    if(cfg.matchPlay){
+      const pairs=pairings&&pairings[n];
+      [0,1,2,3].forEach(i=>{
+        const w=dayRes['m'+i];
+        if(w&&pairs&&pairs[i]){
+          const p0=pMap[pairs[i][0]],p1=pMap[pairs[i][1]];
+          if(p0&&p1){
+            const winner=w==='half'?'Halved':(pMap[parseInt(w)]?.name||w);
+            ctx+=`  Match ${i+1} (${p0.name} vs ${p1.name}): ${winner}\n`;
+          }
+        }
+      });
+    } else {
+      [1,2].forEach(g=>{
+        const pairs=pairings&&pairings[n];
+        const gm=dayRes[`g${g}match`];
+        if(gm!==undefined&&gm!==''){
+          let winner='—';
+          if(gm==='half')winner='Halved';
+          else if(pairs&&pairs[parseInt(gm)]){
+            winner=pairs[parseInt(gm)].map(id=>pMap[id]?.name||'?').join(' & ');
+          }
+          ctx+=`  Group ${g} match: ${winner}\n`;
+        }
+      });
+    }
+    ctx+='\n';
+  }
+
+  // Previous days' scores (running TC standings)
+  const tcDays=[1,2,4].filter(d=>d<n&&Object.keys(allScores[d]||{}).length>0);
+  if(tcDays.length>0){
+    ctx+=`RUNNING TOUR CHAMPIONSHIP STANDINGS (before today):\n`;
+    const standings=players.map(p=>{
+      let total=0;
+      tcDays.forEach(d=>{if(allScores[d]&&allScores[d][p.id]!=null)total+=allScores[d][p.id];});
+      return{name:p.name,total};
+    }).sort((a,b)=>b.total-a.total).filter(p=>p.total>0);
+    standings.forEach((p,i)=>ctx+=`  ${i+1}. ${p.name}: ${p.total} pts\n`);
+    ctx+='\n';
+  }
+
+  // Previous days' highlights
+  [1,2,3].filter(d=>d<n).forEach(d=>{
+    const ds=allScores[d]||{};
+    const dr=allResults[d]||{};
+    if(Object.keys(ds).length>0||Object.keys(dr).length>0){
+      ctx+=`DAY ${d} (${DAY_CONFIG[d].dayName}) RECAP:\n`;
+      const sorted=players.map(p=>({...p,sc:ds[p.id]??null})).filter(p=>p.sc!==null).sort((a,b)=>b.sc-a.sc);
+      if(sorted.length>0)ctx+=`  Top scorer: ${sorted[0].name} (${sorted[0].sc} pts)\n`;
+      if(sorted.length>0)ctx+=`  Bottom scorer: ${sorted[sorted.length-1].name} (${sorted[sorted.length-1].sc} pts)\n`;
+    }
+  });
+
+  return ctx;
+}
+
+async function generateDaySummary(n){
+  let apiKey=getAiKey();
+  if(!apiKey){
+    apiKey=prompt('Enter your Anthropic API key to enable AI summaries (stored locally on this device):');
+    if(!apiKey)return;
+    saveAiKey(apiKey.trim());
+  }
+
+  // Show loading state
+  const card=document.getElementById(`ai-summary-card-${n}`);
+  const body=document.getElementById(`ai-summary-body-${n}`);
+  const btn=document.getElementById(`ai-summary-btn-${n}`);
+  if(body)body.innerHTML='<div style="color:var(--muted);font-size:.85rem;padding:8px 0;">✨ Generating humorous summary...</div>';
+  if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
+
+  const context=buildAiContext(n);
+  const cfg=DAY_CONFIG[n];
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:500,
+        messages:[{
+          role:'user',
+          content:`You're the unofficial scribe for a Portugal golf lads' trip. Write a short, funny, slightly savage debrief for ${cfg.title} (${cfg.dayName}) on the ${cfg.course}. Reference specific players by name — praise the high scorers, gently mock the stragglers, note any dramatic match results. Reference how things compare to previous days if available. Use golf puns, lad banter, and keep it to 3-4 punchy paragraphs. No bullet points — flowing prose only.\n\nDATA:\n${context}`
+        }]
+      })
+    });
+    const data=await res.json();
+    if(data.error){throw new Error(data.error.message||'API error');}
+    const text=data.content?.[0]?.text||'No summary generated.';
+    saveSummary(n,text);
+    if(body)body.innerHTML=`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;color:var(--text);">${text}</p>`;
+    if(btn){btn.disabled=false;btn.textContent='🔄 Regenerate';}
+  }catch(e){
+    console.error('AI summary error:',e);
+    if(body)body.innerHTML=`<p style="font-size:.82rem;color:var(--red);">Error: ${e.message}. Check your API key or internet connection.</p>`;
+    if(btn){btn.disabled=false;btn.textContent='✨ Try Again';}
+  }
+}
+
+function clearAiKey(){
+  if(confirm('Clear saved API key?')){lss(K.aikey,'');toast('API key cleared ✅');}
+}
+
+function buildAiSummaryCard(n){
+  const cfg=DAY_CONFIG[n];
+  if(cfg.funDay)return''; // No summary for fun day
+  const existing=getSummaries()[n]||'';
+  const btnLabel=existing?'🔄 Regenerate':'✨ Generate Summary';
+  const content=existing
+    ?`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;color:var(--text);">${existing}</p>`
+    :`<p style="font-size:.82rem;color:var(--muted);">Hit Generate to get an AI-written humorous take on the day — the more scores and results you've entered, the better!</p>`;
+  return`<div class="card" id="ai-summary-card-${n}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="card-label" style="margin-bottom:0;">🤣 Day Summary</div>
+      <button class="btn btn-sm" id="ai-summary-btn-${n}" onclick="generateDaySummary(${n})">${btnLabel}</button>
+    </div>
+    <div id="ai-summary-body-${n}">${content}</div>
+  </div>`;
+}
 
 // ── Debug helper (open browser console and type: debugGolf()) ──────
 window.debugGolf=function(){
