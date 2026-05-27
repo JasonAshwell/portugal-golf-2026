@@ -1759,7 +1759,7 @@ function buildResultsCard(n,pairings,pMap,players,cfg){
   }
 
   // NP winners (all days)
-  html+=buildNPSection(players,n);
+  html+=buildNPSection(players,n,pairings);
   html+=`<div class="fl"><button class="btn btn-sm" onclick="toast('Results auto-saved ✅')">💾 Save Results</button></div>`;
   html+=`</div>`;
   return html;
@@ -1854,9 +1854,24 @@ function buildMatchPlayResults(pairs,pMap,players,n){
   return html;
 }
 
-function buildNPSection(players,n){
+function buildNPSection(players,n,pairings){
   const cfg=DAY_CONFIG[n];
-  const allOpts=`<option value="">— Select —</option>`+players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const pMap=playerMap();
+
+  function opts(ids){
+    // ids = array of player IDs to include; if null show all
+    const list=ids?players.filter(p=>ids.includes(p.id)):players;
+    return`<option value="">— Select —</option>`+list.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  }
+
+  // Group player IDs for Days 1 & 4: Group 1 = pairs[0]+pairs[2], Group 2 = pairs[1]+pairs[3]
+  function groupIds(g){
+    const pairs=pairings&&pairings[n];
+    if(!pairs)return null;
+    // g=1 → pair indices 0,2; g=2 → pair indices 1,3
+    return [...(pairs[(g-1)]||[]),...(pairs[(g+1)]||[])];
+  }
+
   let html=`<div class="result-section" style="margin-top:8px;">`;
 
   if(cfg.isScramble){
@@ -1865,12 +1880,12 @@ function buildNPSection(players,n){
     [1,2,3,4].forEach(i=>{
       html+=`<div class="result-row">
         <span class="result-label">NP ${i}</span>
-        <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${allOpts}</select>
+        <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${opts(null)}</select>
       </div>`;
     });
     html+=`<div class="result-row">
       <span class="result-label">NP in Reg — Hole 18 (€2)</span>
-      <select class="result-select" id="res-${n}-np18" onchange="saveDayResult(${n},'np18',this.value)">${allOpts}</select>
+      <select class="result-select" id="res-${n}-np18" onchange="saveDayResult(${n},'np18',this.value)">${opts(null)}</select>
     </div>`;
   } else if(n===2){
     // Day 2: 4 NPs across all 8 players at €1 each
@@ -1878,18 +1893,19 @@ function buildNPSection(players,n){
     [1,2,3,4].forEach(i=>{
       html+=`<div class="result-row">
         <span class="result-label">NP ${i}</span>
-        <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${allOpts}</select>
+        <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${opts(null)}</select>
       </div>`;
     });
   } else {
-    // Days 1 & 4: 4 NPs per group at €0.50 each
+    // Days 1 & 4: 4 NPs per group at €0.50 each — filtered to that group's players
     html+=`<div class="result-section-title">📍 Nearest the Pin (€0.50 each)</div>`;
     [1,2].forEach(g=>{
+      const gIds=groupIds(g);
       html+=`<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 0 4px;">Group ${g}</div>`;
       [1,2,3,4].forEach(i=>{
         html+=`<div class="result-row">
           <span class="result-label">NP ${i}</span>
-          <select class="result-select" id="res-${n}-g${g}np${i}" onchange="saveDayResult(${n},'g${g}np${i}',this.value)">${allOpts}</select>
+          <select class="result-select" id="res-${n}-g${g}np${i}" onchange="saveDayResult(${n},'g${g}np${i}',this.value)">${opts(gIds)}</select>
         </div>`;
       });
     });
