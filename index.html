@@ -617,7 +617,8 @@
         </table>
       </div>
       <p style="font-size:.68rem;color:var(--muted);margin-top:10px;line-height:1.6;">
-        Days 1, 2 &amp; 4 (4BBB): F9/B9/Match <strong style="color:var(--text)">€1/person</strong> · NP <strong style="color:var(--text)">€0.50</strong> <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
+        Days 1 &amp; 4 (4BBB): F9/B9/Match <strong style="color:var(--text)">€1/person</strong> · NP <strong style="color:var(--text)">€0.50</strong> per group <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
+        Day 2 (4BBB): F9/B9/Match <strong style="color:var(--text)">€1/person</strong> · NP <strong style="color:var(--text)">€1</strong> across all 8 <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
         Day 3 (Scramble): 1st <strong style="color:var(--text)">€10/person</strong> · 2nd <strong style="color:var(--text)">€5/person</strong> · NP <strong style="color:var(--text)">€2</strong> · NP in reg on 18 <strong style="color:var(--text)">€2</strong> ·
         TC: <strong style="color:var(--text)">€50 / €20 / €10</strong>
       </p>
@@ -1871,14 +1872,26 @@ function buildNPSection(players,n){
       <span class="result-label">NP in Reg — Hole 18 (€2)</span>
       <select class="result-select" id="res-${n}-np18" onchange="saveDayResult(${n},'np18',this.value)">${allOpts}</select>
     </div>`;
-  } else {
-    // 4BBB days (1, 2, 4): one NP per group at €0.50
-    html+=`<div class="result-section-title">📍 Nearest the Pin (€0.50 per group)</div>`;
-    [1,2].forEach(g=>{
+  } else if(n===2){
+    // Day 2: 4 NPs across all 8 players at €1 each
+    html+=`<div class="result-section-title">📍 Nearest the Pin (€1 each)</div>`;
+    [1,2,3,4].forEach(i=>{
       html+=`<div class="result-row">
-        <span class="result-label">Group ${g} NP</span>
-        <select class="result-select" id="res-${n}-np${g}" onchange="saveDayResult(${n},'np${g}',this.value)">${allOpts}</select>
+        <span class="result-label">NP ${i}</span>
+        <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${allOpts}</select>
       </div>`;
+    });
+  } else {
+    // Days 1 & 4: 4 NPs per group at €0.50 each
+    html+=`<div class="result-section-title">📍 Nearest the Pin (€0.50 each)</div>`;
+    [1,2].forEach(g=>{
+      html+=`<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 0 4px;">Group ${g}</div>`;
+      [1,2,3,4].forEach(i=>{
+        html+=`<div class="result-row">
+          <span class="result-label">NP ${i}</span>
+          <select class="result-select" id="res-${n}-g${g}np${i}" onchange="saveDayResult(${n},'g${g}np${i}',this.value)">${allOpts}</select>
+        </div>`;
+      });
     });
   }
 
@@ -2181,9 +2194,12 @@ function calculateWinnings(){
       // Day 3: 4 NPs at €2 + NP in reg on 18 at €2
       [1,2,3,4].forEach(i=>addPlayer(dayData['np'+i],n,2));
       addPlayer(dayData['np18'],n,2);
+    } else if(n===2){
+      // Day 2: 4 NPs across all 8 players at €1 each
+      [1,2,3,4].forEach(i=>addPlayer(dayData['np'+i],n,1));
     } else {
-      // 4BBB: one NP per group at €0.50
-      [1,2].forEach(g=>addPlayer(dayData['np'+g],n,0.50));
+      // Days 1 & 4: 4 NPs per group at €0.50 each
+      [1,2].forEach(g=>[1,2,3,4].forEach(i=>addPlayer(dayData[`g${g}np${i}`],n,0.50)));
     }
   });
 
@@ -2319,8 +2335,10 @@ function renderDailyWinnersSummary(){
     if(cfg.isScramble){
       [1,2,3,4].forEach(i=>{const v=dayData['np'+i];if(v)entries.push([`📍 NP ${i}`,playerLabel(v)]);});
       if(dayData.np18)entries.push(['📍 NP in Reg — Hole 18',playerLabel(dayData.np18)]);
+    } else if(n===2){
+      [1,2,3,4].forEach(i=>{const v=dayData['np'+i];if(v)entries.push([`📍 NP ${i}`,playerLabel(v)]);});
     } else {
-      [1,2].forEach(g=>{const v=dayData['np'+g];if(v)entries.push([`📍 Group ${g} NP`,playerLabel(v)]);});
+      [1,2].forEach(g=>[1,2,3,4].forEach(i=>{const v=dayData[`g${g}np${i}`];if(v)entries.push([`📍 Group ${g} NP ${i}`,playerLabel(v)]);}));
     }
 
     if(entries.length){
