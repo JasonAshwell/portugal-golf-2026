@@ -571,6 +571,20 @@
         </div>
       </div>
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">Teams stay the same all 4 days. Balanced by effective handicap. Use dropdowns to reassign players. Hit <strong style="color:var(--text)">Generate Pairings</strong> to auto-create daily pairings after setting teams.</p>
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <div style="flex:1;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);border-radius:10px;padding:10px 13px;">
+          <div style="font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:5px;">Team A Name</div>
+          <input id="team-a-name-input" type="text" placeholder="Team A"
+            style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,230,118,.4);color:var(--text);font-size:.95rem;font-weight:700;outline:none;padding:2px 0;"
+            oninput="updateTeamName('A',this.value)">
+        </div>
+        <div style="flex:1;background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.25);border-radius:10px;padding:10px 13px;">
+          <div style="font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--blue);margin-bottom:5px;">Team B Name</div>
+          <input id="team-b-name-input" type="text" placeholder="Team B"
+            style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(79,195,247,.4);color:var(--text);font-size:.95rem;font-weight:700;outline:none;padding:2px 0;"
+            oninput="updateTeamName('B',this.value)">
+        </div>
+      </div>
       <div class="teams2" id="teams2-grid">
         <div style="grid-column:1/-1;color:var(--muted);font-size:.85rem;padding:8px 0;">Hit <strong style="color:var(--text)">Re-draw Teams</strong> to generate balanced teams.</div>
       </div>
@@ -1364,6 +1378,12 @@ function renderTeams(){
   const teams=getTeams(),players=getPlayers();
   const container=document.getElementById('teams2-grid');
   if(!container)return;
+  // Populate the top name inputs with saved values
+  const names=getTeamNames();
+  const inA=document.getElementById('team-a-name-input');
+  const inB=document.getElementById('team-b-name-input');
+  if(inA&&document.activeElement!==inA)inA.value=names.A||'';
+  if(inB&&document.activeElement!==inB)inB.value=names.B||'';
   if(!teams){
     container.innerHTML='<div style="grid-column:1/-1;color:var(--muted);font-size:.85rem;padding:8px 0;">Hit <strong style="color:var(--text)">Re-draw Teams</strong> to generate balanced teams.</div>';
     return;
