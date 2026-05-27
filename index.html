@@ -1854,22 +1854,34 @@ function buildMatchPlayResults(pairs,pMap,players,n){
 }
 
 function buildNPSection(players,n){
-  const npAmt=n===3?'€2':'€0.50';
+  const cfg=DAY_CONFIG[n];
   const allOpts=`<option value="">— Select —</option>`+players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  let html=`<div class="result-section" style="margin-top:8px;">
-    <div class="result-section-title">📍 Nearest the Pin (${npAmt} each)</div>`;
-  [1,2,3,4].forEach(i=>{
+  let html=`<div class="result-section" style="margin-top:8px;">`;
+
+  if(cfg.isScramble){
+    // Day 3: 4 open NPs at €2 each + NP in reg on 18
+    html+=`<div class="result-section-title">📍 Nearest the Pin (€2 each)</div>`;
+    [1,2,3,4].forEach(i=>{
+      html+=`<div class="result-row">
+        <span class="result-label">NP ${i}</span>
+        <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${allOpts}</select>
+      </div>`;
+    });
     html+=`<div class="result-row">
-      <span class="result-label">NP ${i}</span>
-      <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${allOpts}</select>
-    </div>`;
-  });
-  if(n===3){
-    html+=`<div class="result-row">
-      <span class="result-label">📍 NP in Reg — Hole 18 (€2)</span>
+      <span class="result-label">NP in Reg — Hole 18 (€2)</span>
       <select class="result-select" id="res-${n}-np18" onchange="saveDayResult(${n},'np18',this.value)">${allOpts}</select>
     </div>`;
+  } else {
+    // 4BBB days (1, 2, 4): one NP per group at €0.50
+    html+=`<div class="result-section-title">📍 Nearest the Pin (€0.50 per group)</div>`;
+    [1,2].forEach(g=>{
+      html+=`<div class="result-row">
+        <span class="result-label">Group ${g} NP</span>
+        <select class="result-select" id="res-${n}-np${g}" onchange="saveDayResult(${n},'np${g}',this.value)">${allOpts}</select>
+      </div>`;
+    });
   }
+
   html+=`</div>`;
   return html;
 }
@@ -2164,10 +2176,15 @@ function calculateWinnings(){
       });
     }
 
-    // NP winners: €2 each on Day 3, €0.50 all other days
-    const npAmt=n===3?2:0.50;
-    [1,2,3,4].forEach(i=>addPlayer(dayData['np'+i],n,npAmt));
-    if(n===3)addPlayer(dayData['np18'],n,2);
+    // NP winners
+    if(cfg.isScramble){
+      // Day 3: 4 NPs at €2 + NP in reg on 18 at €2
+      [1,2,3,4].forEach(i=>addPlayer(dayData['np'+i],n,2));
+      addPlayer(dayData['np18'],n,2);
+    } else {
+      // 4BBB: one NP per group at €0.50
+      [1,2].forEach(g=>addPlayer(dayData['np'+g],n,0.50));
+    }
   });
 
   // Tour Championship prizes
@@ -2299,11 +2316,12 @@ function renderDailyWinnersSummary(){
       });
     }
     // NPs
-    [1,2,3,4].forEach(i=>{
-      const v=dayData['np'+i];
-      if(v)entries.push([`📍 NP ${i}`,playerLabel(v)]);
-    });
-    if(n===3&&dayData.np18)entries.push(['📍 NP in Reg — Hole 18',playerLabel(dayData.np18)]);
+    if(cfg.isScramble){
+      [1,2,3,4].forEach(i=>{const v=dayData['np'+i];if(v)entries.push([`📍 NP ${i}`,playerLabel(v)]);});
+      if(dayData.np18)entries.push(['📍 NP in Reg — Hole 18',playerLabel(dayData.np18)]);
+    } else {
+      [1,2].forEach(g=>{const v=dayData['np'+g];if(v)entries.push([`📍 Group ${g} NP`,playerLabel(v)]);});
+    }
 
     if(entries.length){
       html+=entries.map(([label,val])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.83rem;"><span style="color:var(--muted);">${label}</span><span style="font-weight:700;">${val}</span></div>`).join('');
