@@ -925,8 +925,13 @@ async function pullFromFirebase(){
     const data=await res.json();
     if(!data){ setSyncDot('synced'); return false; }
     let changed=false;
+    // AI config keys: don't overwrite a non-empty local value with an empty Firebase value
+    const aiKeys=new Set([K.aikey,K.aitoken]);
     SYNC_KEYS.forEach(key=>{
-      if(data[key]!==undefined){ const nv=JSON.stringify(data[key]); if(localStorage.getItem(key)!==nv){localStorage.setItem(key,nv);changed=true;} }
+      if(data[key]!==undefined){
+        if(aiKeys.has(key)&&!data[key]&&localStorage.getItem(key))return; // protect local config from empty Firebase value
+        const nv=JSON.stringify(data[key]); if(localStorage.getItem(key)!==nv){localStorage.setItem(key,nv);changed=true;}
+      }
     });
     setSyncDot('synced');
     return changed;
@@ -2682,7 +2687,11 @@ function getSummaries(){return ls(K.summaries,{});}
 function saveSummary(n,text){const s=getSummaries();s[n]=text;lss(K.summaries,s);}
 function getWorkerUrl(){return ls(K.aikey,'');}
 function getWorkerToken(){return ls(K.aitoken,'');}
-function saveWorkerConfig(url,token){lss(K.aikey,url.trim());lss(K.aitoken,token.trim());}
+function saveWorkerConfig(url,token){
+  lss(K.aikey,url.trim());
+  lss(K.aitoken,token.trim());
+  pushToFirebase(); // push immediately so other devices get it and local isn't overwritten by next poll
+}
 
 function buildAiContext(n){
   const players=getPlayers();
@@ -2848,7 +2857,7 @@ async function generateDaySummary(n){
     if(btn){btn.disabled=false;btn.textContent='🔄 Regenerate';}
   }catch(e){
     console.error('AI summary error:',e);
-    if(body)body.innerHTML=`<p style="font-size:.82rem;color:var(--red);">❌ ${e.message}<br><span style="font-size:.75rem;">Check Worker URL/token or internet connection.</span></p>`;
+    if(body)body.innerHTML=`<p style="font-size:.82rem;color:var(--red);">❌ ${e.message}<br><span style="font-size:.75rem;color:var(--muted);">URL: ${workerUrl||'(none)'}<br>Tap ⚙ to reconfigure.</span></p>`;
     if(btn){btn.disabled=false;btn.textContent='✨ Try Again';}
   }
 }
