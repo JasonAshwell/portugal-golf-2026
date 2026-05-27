@@ -866,6 +866,13 @@ const DAY_CONFIG = {
     scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf',
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
   },
+  6: {
+    title:'Day 6', emoji:'✈️', course:'', dayName:'Friday', teeTime:'',
+    courseDesc:'Travel day / last morning',
+    format:'TBD', tcDay:false, matchPlay:false, funDay:true, color:'var(--muted)',
+    formatHow:'No golf scheduled — travel day.',
+    courseUrl:'', scorecardUrl:'', slopeUrl:'',
+  },
 };
 
 // Slope & course ratings per tee colour (approx. — edit if resort provides different values)
@@ -2822,6 +2829,11 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     setInterval(async ()=>{
       const c = await pullFromFirebase();
       if(c) refreshCurrentTab();
+      else {
+        // Even if game data didn't change, always re-fetch photos when that tab is open
+        const activeTab = document.querySelector('.tab.active');
+        if(activeTab && activeTab.id==='tab-photos') loadAndRenderPhotos();
+      }
     }, 15000);
   } else {
     setSyncDot('off');
@@ -3149,7 +3161,7 @@ function renderPhotos(){
   // Build day nav
   const nav=document.getElementById('photos-day-nav');
   if(nav){
-    nav.innerHTML=[1,2,3,4,5].map(n=>{
+    nav.innerHTML=[1,2,3,4,5,6].map(n=>{
       const cfg=DAY_CONFIG[n];
       return`<button class="photo-day-btn${currentPhotoDay===n?' active':''}" onclick="switchPhotoDay(${n})">${cfg.emoji} ${cfg.title}</button>`;
     }).join('');
