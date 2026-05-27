@@ -941,25 +941,18 @@ let logNextId = 100;
 const FIREBASE_URL = 'https://golf-2026-4fe36-default-rtdb.firebaseio.com';  // ← paste your database URL here
 
 // ═══════════════════════════════════════════════════
-// FIREBASE STORAGE — for photo uploads
+// CLOUDINARY — for photo uploads (free, no credit card)
 //
-//  1. Go to https://console.firebase.google.com
-//     → Your project → Build → Storage → Get started
-//     → Start in test mode → Done
-//  2. In Storage Rules tab, paste:
-//       rules_version = '2';
-//       service firebase.storage {
-//         match /b/{bucket}/o {
-//           match /{allPaths=**} {
-//             allow read, write: if true;
-//           }
-//         }
-//       }
-//  3. The bucket name below is auto-derived from your project ID.
-//     If uploads fail, check the Firebase Storage bucket name in the console.
+//  SETUP (2 minutes):
+//  1. Sign up free at https://cloudinary.com
+//  2. From the dashboard copy your "Cloud name"
+//  3. Go to Settings → Upload → scroll to Upload presets
+//     → Add upload preset → set Signing Mode to "Unsigned"
+//     → Save → copy the preset name
+//  4. Paste both values below and redeploy
 // ═══════════════════════════════════════════════════
-const STORAGE_BUCKET = 'golf-2026-4fe36.appspot.com';
-const STORAGE_BASE   = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o`;
+const CLOUDINARY_CLOUD_NAME   = 'dnqt0yrvp';   // ← e.g. 'abc123xyz'
+const CLOUDINARY_UPLOAD_PRESET = 'PortugalGolf';  // ← e.g. 'golf_unsigned'
 
 const SYNC_KEYS  = Object.values(K);
 const FB_BASE    = FIREBASE_URL.replace(/\/+$/, '');  // strip any trailing slash
@@ -3106,17 +3099,20 @@ function compressImage(file,maxW=1400,quality=0.82){
   });
 }
 
-// ── Firebase Storage upload / delete ─────────────
-async function storageUpload(blob,path){
-  const url=`${STORAGE_BASE}?uploadType=media&name=${encodeURIComponent(path)}`;
-  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'image/jpeg'},body:blob});
-  if(!res.ok)throw new Error(`Storage upload failed: ${res.status}`);
+// ── Cloudinary upload ─────────────────────────────
+async function cloudinaryUpload(blob){
+  if(!CLOUDINARY_CLOUD_NAME||!CLOUDINARY_UPLOAD_PRESET){
+    throw new Error('Cloudinary not configured — add Cloud Name and Upload Preset in the code');
+  }
+  const fd=new FormData();
+  fd.append('file',blob);
+  fd.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);
+  const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,{
+    method:'POST',body:fd
+  });
+  if(!res.ok)throw new Error(`Cloudinary upload failed: ${res.status}`);
   const d=await res.json();
-  return`${STORAGE_BASE}/${encodeURIComponent(path)}?alt=media&token=${d.downloadTokens}`;
-}
-
-async function storageDelete(path){
-  await fetch(`${STORAGE_BASE}/${encodeURIComponent(path)}`,{method:'DELETE'});
+  return{url:d.secure_url,publicId:d.public_id};
 }
 
 // ── Upload handler ────────────────────────────────
@@ -3130,9 +3126,8 @@ async function handlePhotoUpload(event){
     status.textContent=`Uploading ${done+1} of ${files.length}…`;
     try{
       const blob=await compressImage(file);
-      const path=`photos/day${currentPhotoDay}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
-      const url=await storageUpload(blob,path);
-      await fbPhotosPost(currentPhotoDay,{url,path,uploader,ts:Date.now(),comments:null});
+      const {url,publicId}=await cloudinaryUpload(blob);
+      await fbPhotosPost(currentPhotoDay,{url,publicId,uploader,ts:Date.now(),comments:null});
       done++;
     }catch(e){
       toast(`❌ Upload failed: ${e.message}`);
@@ -3266,10 +3261,7 @@ async function deleteCurrentPhoto(){
   if(!currentPhotoId)return;
   if(!confirm('Delete this photo? This cannot be undone.'))return;
   const {id,day}=currentPhotoId;
-  const photo=allPhotos[`day${day}`]?.[id];
-  if(photo?.path){
-    try{await storageDelete(photo.path);}catch(e){}
-  }
+  // Removes photo from the gallery (Cloudinary file stays on free plan — won't affect storage)
   await fbPhotoDelete(day,id);
   closePhotoModal();
   allPhotos=await fbPhotosGet();
