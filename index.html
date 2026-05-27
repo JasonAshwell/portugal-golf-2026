@@ -838,6 +838,7 @@ const K = {
   noSlope:  'amd_noslope_v1',
   summaries:'amd_summaries_v1',
   aikey:    'amd_aikey_v1',
+  aitoken:  'amd_aitoken_v1',
 };
 
 const DEFAULT_LOGISTICS = [
@@ -2680,8 +2681,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 function getSummaries(){return ls(K.summaries,{});}
 function saveSummary(n,text){const s=getSummaries();s[n]=text;lss(K.summaries,s);}
 function getWorkerUrl(){return ls(K.aikey,'');}
-function getWorkerToken(){return ls('amd_aitoken_v1','');}
-function saveWorkerConfig(url,token){lss(K.aikey,url.trim());lss('amd_aitoken_v1',token.trim());}
+function getWorkerToken(){return ls(K.aitoken,'');}
+function saveWorkerConfig(url,token){lss(K.aikey,url.trim());lss(K.aitoken,token.trim());}
 
 function buildAiContext(n){
   const players=getPlayers();
