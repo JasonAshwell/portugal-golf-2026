@@ -2679,8 +2679,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 // ═══════════════════════════════════════════════════
 function getSummaries(){return ls(K.summaries,{});}
 function saveSummary(n,text){const s=getSummaries();s[n]=text;lss(K.summaries,s);}
-function getAiKey(){return ls(K.aikey,'');}
-function saveAiKey(k){lss(K.aikey,k);}
+function getWorkerUrl(){return ls(K.aikey,'');}
+function getWorkerToken(){return ls('amd_aitoken_v1','');}
+function saveWorkerConfig(url,token){lss(K.aikey,url.trim());lss('amd_aitoken_v1',token.trim());}
 
 function buildAiContext(n){
   const players=getPlayers();
@@ -2798,16 +2799,26 @@ function buildAiContext(n){
   return ctx;
 }
 
+function showWorkerSetup(){
+  const url=getWorkerUrl();
+  const token=getWorkerToken();
+  const newUrl=prompt('Enter your Cloudflare Worker URL:\n(e.g. https://golf-summary.myname.workers.dev)',url||'');
+  if(newUrl===null)return;
+  const newToken=prompt('Enter your GOLF_TOKEN (the secret you set in the Worker settings):',token||'');
+  if(newToken===null)return;
+  saveWorkerConfig(newUrl,newToken);
+  toast('AI summary config saved ✅');
+}
+
 async function generateDaySummary(n){
-  let apiKey=getAiKey();
-  if(!apiKey){
-    apiKey=prompt('Enter your Anthropic API key to enable AI summaries (stored locally on this device):');
-    if(!apiKey)return;
-    saveAiKey(apiKey.trim());
+  const workerUrl=getWorkerUrl();
+  const workerToken=getWorkerToken();
+
+  if(!workerUrl||!workerToken){
+    showWorkerSetup();
+    return;
   }
 
-  // Show loading state
-  const card=document.getElementById(`ai-summary-card-${n}`);
   const body=document.getElementById(`ai-summary-body-${n}`);
   const btn=document.getElementById(`ai-summary-btn-${n}`);
   if(body)body.innerHTML='<div style="color:var(--muted);font-size:.85rem;padding:8px 0;">✨ Generating humorous summary...</div>';
@@ -2817,38 +2828,28 @@ async function generateDaySummary(n){
   const cfg=DAY_CONFIG[n];
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(workerUrl,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-haiku-4-5-20251001',
-        max_tokens:500,
-        messages:[{
-          role:'user',
-          content:`You're the unofficial scribe for a Portugal golf lads' trip. Write a short, funny, slightly savage debrief for ${cfg.title} (${cfg.dayName}) on the ${cfg.course}. Reference specific players by name — praise the high scorers, gently mock the stragglers, note any dramatic match results. Reference how things compare to previous days if available. Use golf puns, lad banter, and keep it to 3-4 punchy paragraphs. No bullet points — flowing prose only.\n\nDATA:\n${context}`
-        }]
+        token:workerToken,
+        context,
+        dayName:`${cfg.title} — ${cfg.dayName}`,
+        course:cfg.course,
+        format:cfg.format,
       })
     });
     const data=await res.json();
-    if(data.error){throw new Error(data.error.message||'API error');}
-    const text=data.content?.[0]?.text||'No summary generated.';
+    if(data.error)throw new Error(data.error);
+    const text=data.text||'No summary generated.';
     saveSummary(n,text);
     if(body)body.innerHTML=`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;color:var(--text);">${text}</p>`;
     if(btn){btn.disabled=false;btn.textContent='🔄 Regenerate';}
   }catch(e){
     console.error('AI summary error:',e);
-    if(body)body.innerHTML=`<p style="font-size:.82rem;color:var(--red);">Error: ${e.message}. Check your API key or internet connection.</p>`;
+    if(body)body.innerHTML=`<p style="font-size:.82rem;color:var(--red);">❌ ${e.message}<br><span style="font-size:.75rem;">Check Worker URL/token or internet connection.</span></p>`;
     if(btn){btn.disabled=false;btn.textContent='✨ Try Again';}
   }
-}
-
-function clearAiKey(){
-  if(confirm('Clear saved API key?')){lss(K.aikey,'');toast('API key cleared ✅');}
 }
 
 function buildAiSummaryCard(n){
