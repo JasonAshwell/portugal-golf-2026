@@ -617,10 +617,8 @@
         </table>
       </div>
       <p style="font-size:.68rem;color:var(--muted);margin-top:10px;line-height:1.6;">
-        4BBB F9 / B9 / Match: <strong style="color:var(--text)">€1/person</strong> ·
-        Scramble win: <strong style="color:var(--text)">€10/person</strong> ·
-        Match play win: <strong style="color:var(--text)">€10/person</strong> ·
-        NP: <strong style="color:var(--text)">€0.50</strong> ·
+        Days 1, 2 &amp; 4 (4BBB): F9/B9/Match <strong style="color:var(--text)">€1/person</strong> · NP <strong style="color:var(--text)">€0.50</strong> <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
+        Day 3 (Scramble): 1st <strong style="color:var(--text)">€10/person</strong> · 2nd <strong style="color:var(--text)">€5/person</strong> · NP <strong style="color:var(--text)">€2</strong> · NP in reg on 18 <strong style="color:var(--text)">€2</strong> ·
         TC: <strong style="color:var(--text)">€50 / €20 / €10</strong>
       </p>
     </div>
@@ -786,7 +784,7 @@ const DAY_CONFIG = {
   4: {
     title:'Day 4', emoji:'🔴', course:'Faldo Course', dayName:'Wednesday', teeTime:'9:30am',
     courseDesc:'Par 72 · 6,578m · Sir Nick Faldo · Final Day · Tour Championship Decider',
-    format:'1×1 Match Play + Individual Stableford', tcDay:true, matchPlay:true, color:'var(--red)',
+    format:'4BBB', tcDay:true, matchPlay:false, color:'var(--red)',
     formatHow:'Pure head-to-head golf — you play hole by hole against your opponent. <strong style="color:var(--text)">Win a hole</strong> (score lower on net stableford) and go "1 up." Tie a hole and it\'s halved. The match ends when one player leads by more holes than remain — e.g. "3&2" means 3 up with 2 to play. The match can also be decided on the 18th green. Your stableford score on every hole <strong style="color:var(--text)">simultaneously counts toward the Tour Championship</strong> — so it\'s a double battle to the finish! 🏆',
     courseUrl:'https://www.amendoeiraresort.com/en/golf/',
     scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf',
@@ -1820,10 +1818,14 @@ function buildScrambleResults(pairs,pMap,players,n){
     </div>`;
   });
   html+=`</div><div class="result-section">
-    <div class="result-section-title">Scramble Winner</div>
+    <div class="result-section-title">Scramble Results</div>
     <div class="result-row">
-      <span class="result-label">🏆 Winning Pair</span>
+      <span class="result-label">🏆 1st Place (€10/person)</span>
       <select class="result-select" id="res-${n}-scramble_winner" onchange="saveDayResult(${n},'scramble_winner',this.value)">${allPairsOpts}</select>
+    </div>
+    <div class="result-row">
+      <span class="result-label">🥈 2nd Place (€5/person)</span>
+      <select class="result-select" id="res-${n}-scramble_2nd" onchange="saveDayResult(${n},'scramble_2nd',this.value)">${allPairsOpts}</select>
     </div>
   </div>`;
   return html;
@@ -1852,15 +1854,22 @@ function buildMatchPlayResults(pairs,pMap,players,n){
 }
 
 function buildNPSection(players,n){
+  const npAmt=n===3?'€2':'€0.50';
   const allOpts=`<option value="">— Select —</option>`+players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   let html=`<div class="result-section" style="margin-top:8px;">
-    <div class="result-section-title">📍 Nearest the Pin (€0.50 each)</div>`;
+    <div class="result-section-title">📍 Nearest the Pin (${npAmt} each)</div>`;
   [1,2,3,4].forEach(i=>{
     html+=`<div class="result-row">
       <span class="result-label">NP ${i}</span>
       <select class="result-select" id="res-${n}-np${i}" onchange="saveDayResult(${n},'np${i}',this.value)">${allOpts}</select>
     </div>`;
   });
+  if(n===3){
+    html+=`<div class="result-row">
+      <span class="result-label">📍 NP in Reg — Hole 18 (€2)</span>
+      <select class="result-select" id="res-${n}-np18" onchange="saveDayResult(${n},'np18',this.value)">${allOpts}</select>
+    </div>`;
+  }
   html+=`</div>`;
   return html;
 }
@@ -2008,28 +2017,13 @@ function calculateTeamScores(){
     dayScores[n]={A,B};
   });
 
-  // Day 4 (Match Play): 2 sessions [[0,2],[1,3]] — team winning more matches per session gets 1 pt
+  // Day 4 (4BBB): same as Days 1 & 2 — group overall match winner gets 1 pt
   const d4=results[4]||{};
-  const pairs4=pairings[4];
   let A4=0,B4=0;
-  if(pairs4){
-    [[0,2],[1,3]].forEach(([mi1,mi2])=>{
-      let gA=0,gB=0,hasAny=false;
-      [mi1,mi2].forEach(mi=>{
-        const w=d4['m'+mi];
-        if(!w||w==='')return;
-        hasAny=true;
-        if(w==='half'){gA+=0.5;gB+=0.5;}
-        else{
-          const wid=parseInt(w);
-          if(teams.A.includes(wid))gA+=1;
-          else if(teams.B.includes(wid))gB+=1;
-        }
-      });
-      if(!hasAny)return;
-      if(gA>gB)A4+=1; else if(gB>gA)B4+=1; else{A4+=0.5;B4+=0.5;}
-    });
-  }
+  const g1d4=d4['g1match'];
+  if(g1d4==='0')A4+=1; else if(g1d4==='2')B4+=1; else if(g1d4==='half'){A4+=0.5;B4+=0.5;}
+  const g2d4=d4['g2match'];
+  if(g2d4==='1')A4+=1; else if(g2d4==='3')B4+=1; else if(g2d4==='half'){A4+=0.5;B4+=0.5;}
   dayScores[4]={A:A4,B:B4};
 
   const totalA=Object.values(dayScores).reduce((s,d)=>s+d.A,0);
@@ -2157,14 +2151,12 @@ function calculateWinnings(){
     const cfg=DAY_CONFIG[n];
     const dayData=results[n]||{};
 
-    if(cfg.matchPlay){
-      // Day 4 individual matches: winner gets €10 from day pot
-      [0,1,2,3].forEach(i=>addPlayer(dayData['m'+i],n,10));
-    } else if(cfg.isScramble){
-      // Scramble: winning pair gets €10/person
+    if(cfg.isScramble){
+      // Day 3 Scramble: 1st pair €10/person, 2nd pair €5/person
       addPair(dayData.scramble_winner,n,10);
+      addPair(dayData.scramble_2nd,n,5);
     } else {
-      // 4BBB: F9, B9, Match = €1/person each
+      // 4BBB (Days 1, 2, 4): F9, B9, Match = €1/person each
       [1,2].forEach(g=>{
         addPair(dayData['g'+g+'f9'],n,1);
         addPair(dayData['g'+g+'b9'],n,1);
@@ -2172,8 +2164,10 @@ function calculateWinnings(){
       });
     }
 
-    // NP winners (all days): €0.50 each
-    [1,2,3,4].forEach(i=>addPlayer(dayData['np'+i],n,0.50));
+    // NP winners: €2 each on Day 3, €0.50 all other days
+    const npAmt=n===3?2:0.50;
+    [1,2,3,4].forEach(i=>addPlayer(dayData['np'+i],n,npAmt));
+    if(n===3)addPlayer(dayData['np18'],n,2);
   });
 
   // Tour Championship prizes
@@ -2271,7 +2265,8 @@ function renderDailyWinnersSummary(){
         }
       });
     } else if(cfg.isScramble){
-      if(dayData.scramble_winner)entries.push(['🏆 Scramble Winner',pairLabel(dayData.scramble_winner)]);
+      if(dayData.scramble_winner)entries.push(['🏆 1st Place (€10/person)',pairLabel(dayData.scramble_winner)]);
+      if(dayData.scramble_2nd)entries.push(['🥈 2nd Place (€5/person)',pairLabel(dayData.scramble_2nd)]);
       [0,1,2,3].forEach(i=>{
         if(dayData['pair'+i+'score'])entries.push([`Pair ${i+1} score`,dayData['pair'+i+'score']+' pts']);
       });
@@ -2288,6 +2283,7 @@ function renderDailyWinnersSummary(){
       const v=dayData['np'+i];
       if(v)entries.push([`📍 NP ${i}`,playerLabel(v)]);
     });
+    if(n===3&&dayData.np18)entries.push(['📍 NP in Reg — Hole 18',playerLabel(dayData.np18)]);
 
     if(entries.length){
       html+=entries.map(([label,val])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.83rem;"><span style="color:var(--muted);">${label}</span><span style="font-weight:700;">${val}</span></div>`).join('');
