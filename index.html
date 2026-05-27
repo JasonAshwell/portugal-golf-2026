@@ -2199,7 +2199,7 @@ function renderWinningsTable(){
   }
 
   const medals=['🥇','🥈','🥉'];
-  tbody.innerHTML=rows.map((p,i)=>{
+  const playerRows=rows.map((p,i)=>{
     const m=p.total>0&&i<3?` ${medals[i]}`:'';
     const totalStyle=p.total>0?'color:var(--gold);font-weight:900;font-size:1rem;':'color:var(--muted);';
     const totalStr=p.total>0?`€${p.total%1===0?p.total.toFixed(0):p.total.toFixed(2)}`:'—';
@@ -2213,6 +2213,26 @@ function renderWinningsTable(){
       <td style="text-align:right;${totalStyle}">${totalStr}</td>
     </tr>`;
   }).join('');
+
+  // Totals row
+  const tD1=rows.reduce((s,p)=>s+p.d1,0);
+  const tD2=rows.reduce((s,p)=>s+p.d2,0);
+  const tD3=rows.reduce((s,p)=>s+p.d3,0);
+  const tD4=rows.reduce((s,p)=>s+p.d4,0);
+  const tTc=rows.reduce((s,p)=>s+p.tc,0);
+  const tAll=tD1+tD2+tD3+tD4+tTc;
+  function fmtTotal(v){return v>0?`<strong style="color:var(--text);">€${v%1===0?v.toFixed(0):v.toFixed(2)}</strong>`:`<span style="color:var(--muted);font-size:.8rem;">—</span>`;}
+  const totalsRow=`<tr style="border-top:2px solid var(--border);background:var(--bg3);">
+    <td style="font-size:.7rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);">Total</td>
+    <td style="text-align:center;">${fmtTotal(tD1)}</td>
+    <td style="text-align:center;">${fmtTotal(tD2)}</td>
+    <td style="text-align:center;">${fmtTotal(tD3)}</td>
+    <td style="text-align:center;">${fmtTotal(tD4)}</td>
+    <td style="text-align:center;">${fmtTotal(tTc)}</td>
+    <td style="text-align:right;">${fmtTotal(tAll)}</td>
+  </tr>`;
+
+  tbody.innerHTML=playerRows+totalsRow;
 }
 
 function renderDailyWinnersSummary(){
