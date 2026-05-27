@@ -617,8 +617,8 @@
         </table>
       </div>
       <p style="font-size:.68rem;color:var(--muted);margin-top:10px;line-height:1.6;">
-        Days 1 &amp; 4 (4BBB): F9/B9/Match <strong style="color:var(--text)">€1/person</strong> · NP <strong style="color:var(--text)">€0.50</strong> per group <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
-        Day 2 (4BBB): F9/B9/Match <strong style="color:var(--text)">€1/person</strong> · NP <strong style="color:var(--text)">€1</strong> across all 8 <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
+        Days 1 &amp; 4 (4BBB): F9/B9/Match <strong style="color:var(--text)">€3/person</strong> · NP <strong style="color:var(--text)">€0.50</strong> per group <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
+        Day 2 (4BBB): F9/B9/Match <strong style="color:var(--text)">€3/person</strong> · NP <strong style="color:var(--text)">€1</strong> across all 8 <span style="color:var(--muted)">(reverses if 3-putt+)</span> ·
         Day 3 (Scramble): 1st <strong style="color:var(--text)">€10/person</strong> · 2nd <strong style="color:var(--text)">€5/person</strong> · NP <strong style="color:var(--text)">€2</strong> · NP in reg on 18 <strong style="color:var(--text)">€2</strong> ·
         TC: <strong style="color:var(--text)">€50 / €20 / €10</strong>
       </p>
@@ -2197,11 +2197,11 @@ function calculateWinnings(){
       addPair(dayData.scramble_winner,n,10);
       addPair(dayData.scramble_2nd,n,5);
     } else {
-      // 4BBB (Days 1, 2, 4): F9, B9, Match = €1/person each
+      // 4BBB (Days 1, 2, 4): F9, B9, Match = €3/person each
       [1,2].forEach(g=>{
-        addPair(dayData['g'+g+'f9'],n,1);
-        addPair(dayData['g'+g+'b9'],n,1);
-        addPair(dayData['g'+g+'match'],n,1);
+        addPair(dayData['g'+g+'f9'],n,3);
+        addPair(dayData['g'+g+'b9'],n,3);
+        addPair(dayData['g'+g+'match'],n,3);
       });
     }
 
