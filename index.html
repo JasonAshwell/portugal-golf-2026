@@ -1975,7 +1975,7 @@ function buildMatchPlayResults(pairs,pMap,players,n){
 
 function buildDay4IndividualResults(pairs,pMap,players,n){
   const allPlayerOpts=`<option value="">— Select —</option>`+
-    players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    players.filter(p=>!p.noPrize).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   let html=`<div class="result-section">
     <div class="result-section-title">🏆 Individual Prizes</div>
     <div class="result-row">
@@ -2342,7 +2342,23 @@ function calculateWinnings(){
   function addPlayer(pidStr,day,amount){
     if(!pidStr||pidStr==='half'||pidStr==='')return;
     const pid=parseInt(pidStr);
-    if(!isNaN(pid)&&w[pid])w[pid][day]+=amount;
+    if(isNaN(pid))return;
+    const pMap=playerMap();
+    const p=pMap[pid];
+    if(p&&p.noPrize){
+      // Redirect to partner in same pair for this day
+      if(pairings&&pairings[day]){
+        for(const pair of pairings[day]){
+          if(pair.includes(pid)){
+            const partner=pair.find(id=>id!==pid);
+            if(partner&&w[partner])w[partner][day]+=amount;
+            return;
+          }
+        }
+      }
+      return; // no partner found — forfeited
+    }
+    if(w[pid])w[pid][day]+=amount;
   }
 
   [1,2,3,4].forEach(n=>{
