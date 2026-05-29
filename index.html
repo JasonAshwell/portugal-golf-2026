@@ -949,6 +949,7 @@ const K = {
   summaries:'amd_summaries_v1',
   aikey:    'amd_aikey_v1',
   aitoken:  'amd_aitoken_v1',
+  revealed: 'amd_revealed_v1',
 };
 
 const DEFAULT_LOGISTICS = [
@@ -1163,11 +1164,25 @@ function submitAdminPassword(){
   }
 }
 
+// ═══ REVEAL PAIRINGS HELPERS ═══
+function getRevealedDays(){return ls(K.revealed,{});}
+function isDayRevealed(n){const r=getRevealedDays();return!!r[n];}
+function setDayRevealed(n,on){
+  const r=getRevealedDays();
+  if(on)r[n]=true; else delete r[n];
+  lss(K.revealed,r);
+  // Re-render pairings card and preview
+  renderDay(n);
+  renderPairingsPreview();
+  toast(on?`⛳ Day ${n} pairings revealed!`:`🙈 Day ${n} pairings hidden`);
+}
+
 // Keys that require admin unlock to modify
 const LOCKED_KEYS=new Set([
   K.scores, K.results, K.teams, K.pairings,
   K.players, K.teamnames, K.tees, K.noSlope,
   K.hcpov, K.summaries, K.aikey, K.aitoken,
+  K.revealed,
 ]);
 
 function lss(key,val){
@@ -1599,11 +1614,19 @@ function renderPairingsPreview(){
   }
   const pMap=playerMap();
   const names=getTeamNames();
+  const admin=isAdmin();
   let html='';
   [1,2,3,4].forEach(day=>{
     const cfg=DAY_CONFIG[day];
     const pairs=pairings[day];
     if(!pairs)return;
+    if(!isDayRevealed(day)&&!admin){
+      html+=`<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div style="font-size:.72rem;font-weight:800;color:${cfg.color};margin-bottom:5px;">${cfg.emoji} ${cfg.title} — ${cfg.format}</div>
+        <div style="font-size:.8rem;color:var(--muted);">⏳ Pairings not yet revealed</div>
+      </div>`;
+      return;
+    }
     let matchStr='';
     if(day===4){
       // Day 4: individual 1v1 cross-team matches
@@ -1740,18 +1763,34 @@ function renderDay(n){
 
 // ─── Pairings card ──────────────────────────────────
 function buildPairingsCard(n,pairings,pMap,players,cfg){
+  const revealed=isDayRevealed(n);
+  const admin=isAdmin();
+  const revealBtn=admin
+    ? `<button class="btn btn-ghost btn-sm" onclick="setDayRevealed(${n},${!revealed})">${revealed?'🙈 Hide':'👁 Reveal'}</button>`
+    : '';
   let html=`<div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div class="card-label" style="margin-bottom:0;">${cfg.matchPlay?'⚔️ Matches':'⛳ Pairings'}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="generateAllPairings();renderDay(${n})">🔀 Regenerate</button>
-        <button class="btn btn-ghost btn-sm" id="edit-pairs-btn-${n}" onclick="toggleEditPairings(${n})">✏️ Edit</button>
+        ${admin?`<button class="btn btn-ghost btn-sm" onclick="generateAllPairings();renderDay(${n})">🔀 Regenerate</button>`:''}
+        ${admin?`<button class="btn btn-ghost btn-sm" id="edit-pairs-btn-${n}" onclick="toggleEditPairings(${n})">✏️ Edit</button>`:''}
+        ${revealBtn}
       </div>
     </div>`;
 
   if(!pairings||!pairings[n]){
-    html+=`<p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">No pairings generated yet.</p>
-      <button class="btn btn-sm" onclick="generateAllPairings();renderDay(${n})">⛳ Generate All Pairings</button>`;
+    if(admin){
+      html+=`<p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">No pairings generated yet.</p>
+        <button class="btn btn-sm" onclick="generateAllPairings();renderDay(${n})">⛳ Generate All Pairings</button>`;
+    } else {
+      html+=`<p style="font-size:.85rem;color:var(--muted);">⏳ Pairings not yet available — check back soon!</p>`;
+    }
+  } else if(!revealed&&!admin){
+    html+=`<div style="text-align:center;padding:24px 12px;">
+      <div style="font-size:2rem;margin-bottom:8px;">⏳</div>
+      <div style="font-size:.95rem;font-weight:700;margin-bottom:4px;">Pairings not yet revealed</div>
+      <div style="font-size:.82rem;color:var(--muted);">Check back soon — pairings will appear here once released.</div>
+    </div>`;
   } else {
     const pairs=pairings[n];
     if(n===4){
