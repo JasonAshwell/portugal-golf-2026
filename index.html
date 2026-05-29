@@ -3395,7 +3395,12 @@ function isPreTourMode(n){
 function buildAiSummaryCard(n){
   const cfg=DAY_CONFIG[n];
   if(cfg.funDay)return''; // No summary for fun day
-  if(!summaryCardVisible(n))return''; // Hide until scores exist
+  if(!summaryCardVisible(n)){
+    // Also wipe any stale saved summary so it doesn't reappear after a sync
+    const s=getSummaries();
+    if(s[n]){delete s[n];localStorage.setItem(K.summaries,JSON.stringify(s));}
+    return'';
+  }
   const existing=getSummaries()[n]||'';
   const preTour=isPreTourMode(n);
   const btnLabel=existing
