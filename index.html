@@ -698,7 +698,7 @@
       </div>
       <p style="font-size:.68rem;color:var(--muted);margin-top:10px;line-height:1.6;">
         Days 1 &amp; 2 (4BBB): Best pair <strong style="color:var(--text)">€20 (€10 each)</strong> · 2nd pair <strong style="color:var(--text)">€10 (€5 each)</strong> · 2×NP/group <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
-        Day 3 (Scramble): 1st <strong style="color:var(--text)">€20/person</strong> · 2nd <strong style="color:var(--text)">€10/person</strong> · NP <strong style="color:var(--text)">€1</strong> · NP18 <strong style="color:var(--text)">€1</strong> ·
+        Day 3 (Scramble): 1st <strong style="color:var(--text)">€20 (€10 each)</strong> · 2nd <strong style="color:var(--text)">€10 (€5 each)</strong> · NP <strong style="color:var(--text)">€1</strong> · NP18 <strong style="color:var(--text)">€1</strong> ·
         Day 4: Best individual <strong style="color:var(--text)">€10</strong> · 2nd <strong style="color:var(--text)">€5</strong> · 2×NP/group <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
         TC (7 players): <strong style="color:var(--text)">€40 / €20 / €10</strong>
       </p>
@@ -1940,11 +1940,11 @@ function buildScrambleResults(pairs,pMap,players,n){
   html+=`</div><div class="result-section">
     <div class="result-section-title">Scramble Results</div>
     <div class="result-row">
-      <span class="result-label">🏆 1st Place (€20/person)</span>
+      <span class="result-label">🏆 1st Place (€20 total — €10 each)</span>
       <select class="result-select" id="res-${n}-scramble_winner" onchange="saveDayResult(${n},'scramble_winner',this.value)">${allPairsOpts}</select>
     </div>
     <div class="result-row">
-      <span class="result-label">🥈 2nd Place (€10/person)</span>
+      <span class="result-label">🥈 2nd Place (€10 total — €5 each)</span>
       <select class="result-select" id="res-${n}-scramble_2nd" onchange="saveDayResult(${n},'scramble_2nd',this.value)">${allPairsOpts}</select>
     </div>
   </div>`;
@@ -2366,9 +2366,9 @@ function calculateWinnings(){
     const dayData=results[n]||{};
 
     if(cfg.isScramble){
-      // Day 3 Scramble: 1st pair €20/person, 2nd pair €10/person
-      addPair(dayData.scramble_winner,n,20);
-      addPair(dayData.scramble_2nd,n,10);
+      // Day 3 Scramble: 1st pair €10/person (€20 total), 2nd pair €5/person (€10 total)
+      addPair(dayData.scramble_winner,n,10);
+      addPair(dayData.scramble_2nd,n,5);
     } else if(n===4){
       // Day 4: individual prizes
       addPlayer(dayData.best_individual,n,10);
