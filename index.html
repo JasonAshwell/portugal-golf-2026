@@ -3142,6 +3142,67 @@ function saveWorkerConfig(url,token){
   pushToFirebase(); // push immediately so other devices get it and local isn't overwritten by next poll
 }
 
+function buildPreTourContext(){
+  const players=getPlayers();
+  const allRatings=getAllRatings();
+  const teams=getTeams();
+  const names=getTeamNames();
+  const pMap=playerMap();
+
+  let ctx=`PORTUGAL GOLF TRIP 2026 — PRE-TOUR PLAYER GUIDE\n`;
+  ctx+=`No scores yet — write a hilarious pre-tour preview piece introducing each player based on their ratings and reputation.\n\n`;
+
+  if(teams){
+    ['A','B'].forEach(t=>{
+      ctx+=`TEAM ${names[t]||'Team '+t}:\n`;
+      (teams[t]||[]).forEach(id=>{
+        const p=pMap[id];if(!p)return;
+        const entry=allRatings[id]||{};
+        const cats=Array.isArray(entry._cats)?entry._cats:[];
+        ctx+=`  ${p.name} (HCP ${p.hcp})`;
+        if(cats.length>0){
+          const ratingStrs=cats.map(cat=>{
+            const v=entry[cat]??0;
+            const stars='⭐'.repeat(Math.round(v/2));
+            return`${cat}: ${stars||v+'/10'}`;
+          });
+          ctx+=` — Ratings: ${ratingStrs.join(', ')}`;
+        }
+        if(p.bio)ctx+=`\n    Bio: ${p.bio}`;
+        ctx+='\n';
+      });
+      ctx+='\n';
+    });
+  } else {
+    players.forEach(p=>{
+      const entry=allRatings[p.id]||{};
+      const cats=Array.isArray(entry._cats)?entry._cats:[];
+      ctx+=`  ${p.name} (HCP ${p.hcp})`;
+      if(cats.length>0){
+        const ratingStrs=cats.map(cat=>{
+          const v=entry[cat]??0;
+          const stars='⭐'.repeat(Math.round(v/2));
+          return`${cat}: ${stars||v+'/10'}`;
+        });
+        ctx+=` — Ratings: ${ratingStrs.join(', ')}`;
+      }
+      if(p.bio)ctx+=`\n  Bio: ${p.bio}`;
+      ctx+='\n';
+    });
+  }
+
+  ctx+=`\nWRITING INSTRUCTIONS:
+You are a brutally honest, savage golf pundit — think a cross between an Irish pub loudmouth and a tabloid sports columnist. Write a proper piss-take pre-tour preview. Rules:
+- Give every player a merciless nickname based on their ratings (e.g. "The Gorse Bush Whisperer", "The Eternal Provisional", "Mr Three-Putt").
+- Drag each player's worst ratings relentlessly. If someone scores low on driving, suggest they couldn't hit a barn door with a banjo. Low putting? They've left more putts short than a Sunday league footballer leaves shots on target.
+- Make bold, ridiculous predictions — who will bottle it on the last, who will claim a dodgy ruling, who will blame their clubs.
+- Roast the handicaps. Anyone with a high handicap is clearly milking the system. Anyone with a low handicap has no excuse for playing badly.
+- Pit the teams against each other. Explain why one team is already doomed. Be dramatic about it.
+- End with a sweeping prediction of who lifts the trophy and why they absolutely don't deserve to.
+- Keep it affectionate but absolutely ruthless. No one is spared. Length: 300-450 words. Tone: banter, chaos, zero respect.`;
+  return ctx;
+}
+
 function buildAiContext(n){
   const players=getPlayers();
   const pMap=playerMap();
@@ -3280,10 +3341,11 @@ async function generateDaySummary(n){
 
   const body=document.getElementById(`ai-summary-body-${n}`);
   const btn=document.getElementById(`ai-summary-btn-${n}`);
-  if(body)body.innerHTML='<div style="color:var(--muted);font-size:.85rem;padding:8px 0;">✨ Generating humorous summary...</div>';
+  const preTour=isPreTourMode(n);
+  if(body)body.innerHTML=`<div style="color:var(--muted);font-size:.85rem;padding:8px 0;">${preTour?'🎙 Generating pre-tour preview...':'✨ Generating humorous summary...'}</div>`;
   if(btn){btn.disabled=true;btn.textContent='⏳ Generating...';}
 
-  const context=buildAiContext(n);
+  const context=preTour?buildPreTourContext():buildAiContext(n);
   const cfg=DAY_CONFIG[n];
 
   try{
@@ -3293,9 +3355,9 @@ async function generateDaySummary(n){
       body:JSON.stringify({
         token:workerToken,
         context,
-        dayName:`${cfg.title} — ${cfg.dayName}`,
-        course:cfg.course,
-        format:cfg.format,
+        dayName:preTour?'Pre-Tour Player Preview':`${cfg.title} — ${cfg.dayName}`,
+        course:preTour?'Portugal Golf 2026':cfg.course,
+        format:preTour?'Pre-Tour':cfg.format,
       })
     });
     const data=await res.json();
@@ -3311,18 +3373,44 @@ async function generateDaySummary(n){
   }
 }
 
+function dayHasScores(n){
+  const s=getScores();
+  return Object.keys(s[n]||{}).length>0;
+}
+function anyPreviousDayScores(n){
+  for(let d=1;d<n;d++){if(dayHasScores(d))return true;}
+  return false;
+}
+function summaryCardVisible(n){
+  // Day 1: show if pre-tour mode (always for day 1) — we always show it for day 1
+  if(n===1)return true;
+  // Other days: show if this day or any earlier day has scores
+  return dayHasScores(n)||anyPreviousDayScores(n);
+}
+function isPreTourMode(n){
+  // Day 1 only: pre-tour mode when no Day 1 scores yet
+  return n===1&&!dayHasScores(1);
+}
+
 function buildAiSummaryCard(n){
   const cfg=DAY_CONFIG[n];
   if(cfg.funDay)return''; // No summary for fun day
+  if(!summaryCardVisible(n))return''; // Hide until scores exist
   const existing=getSummaries()[n]||'';
-  const btnLabel=existing?'🔄 Regenerate':'✨ Generate Summary';
+  const preTour=isPreTourMode(n);
+  const btnLabel=existing
+    ? (preTour?'🔄 Regenerate Pre-Tour':'🔄 Regenerate')
+    : (preTour?'🎙 Generate Pre-Tour Preview':'✨ Generate Summary');
+  const placeholder=preTour
+    ? `<p style="font-size:.82rem;color:var(--muted);">No scores yet — hit Generate for a humorous pre-tour player preview based on ratings &amp; reputations!</p>`
+    : `<p style="font-size:.82rem;color:var(--muted);">Hit Generate to get an AI-written humorous take on the day.</p>`;
   const content=existing
     ?`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;color:var(--text);">${existing}</p>`
-    :`<p style="font-size:.82rem;color:var(--muted);">Hit Generate to get an AI-written humorous take on the day — the more scores and results you've entered, the better!</p>`;
+    :placeholder;
   return`<div class="card" id="ai-summary-card-${n}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <div class="card-label" style="margin-bottom:0;">🤣 Day Summary</div>
+        <div class="card-label" style="margin-bottom:0;">${preTour?'🎙 Pre-Tour Preview':'🤣 Day Summary'}</div>
         <button class="btn btn-sm" style="font-size:.65rem;padding:2px 7px;opacity:.6;" onclick="showWorkerSetup()" title="Configure AI settings">⚙</button>
       </div>
       <button class="btn btn-sm" id="ai-summary-btn-${n}" onclick="generateDaySummary(${n})">${btnLabel}</button>
