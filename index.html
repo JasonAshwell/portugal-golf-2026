@@ -3375,7 +3375,15 @@ async function generateDaySummary(n){
 
 function dayHasScores(n){
   const s=getScores();
-  return Object.keys(s[n]||{}).length>0;
+  if(Object.keys(s[n]||{}).length>0)return true;
+  // Day 3 is a scramble — no individual scores, check results instead
+  const cfg=DAY_CONFIG[n];
+  if(cfg&&cfg.isScramble){
+    const r=getDayResults();
+    const d=r[n]||{};
+    return!!(d.scramble_winner||d.np1||d.np2||d.np3||d.np4||d.np18);
+  }
+  return false;
 }
 function anyPreviousDayScores(n){
   for(let d=1;d<n;d++){if(dayHasScores(d))return true;}
@@ -3396,9 +3404,9 @@ function buildAiSummaryCard(n){
   const cfg=DAY_CONFIG[n];
   if(cfg.funDay)return''; // No summary for fun day
   if(!summaryCardVisible(n)){
-    // Also wipe any stale saved summary so it doesn't reappear after a sync
+    // Wipe any stale saved summary and push deletion to Firebase
     const s=getSummaries();
-    if(s[n]){delete s[n];localStorage.setItem(K.summaries,JSON.stringify(s));}
+    if(s[n]){delete s[n];localStorage.setItem(K.summaries,JSON.stringify(s));schedulePush();}
     return'';
   }
   const existing=getSummaries()[n]||'';
