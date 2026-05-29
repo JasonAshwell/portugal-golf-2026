@@ -2009,8 +2009,8 @@ function buildNPSection(players,n,pairings){
   const pMap=playerMap();
 
   function opts(ids){
-    // ids = array of player IDs to include; if null show all
-    const list=ids?players.filter(p=>ids.includes(p.id)):players;
+    // ids = array of player IDs to include; if null show all. Always exclude noPrize players.
+    const list=(ids?players.filter(p=>ids.includes(p.id)):players).filter(p=>!p.noPrize);
     return`<option value="">— Select —</option>`+list.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   }
 
@@ -2324,7 +2324,19 @@ function calculateWinnings(){
     if(pairIdxStr===''||pairIdxStr===undefined||pairIdxStr===null)return;
     const idx=parseInt(pairIdxStr);
     if(isNaN(idx)||!pairings||!pairings[day]||!pairings[day][idx])return;
-    pairings[day][idx].forEach(pid=>{if(w[pid])w[pid][day]+=amount;});
+    const pids=pairings[day][idx];
+    const pMap=playerMap();
+    pids.forEach(pid=>{
+      if(!w[pid])return;
+      const p=pMap[pid];
+      if(p&&p.noPrize){
+        // Redirect this player's share to their partner
+        const partner=pids.find(id=>id!==pid);
+        if(partner&&w[partner])w[partner][day]+=amount;
+      } else {
+        w[pid][day]+=amount;
+      }
+    });
   }
 
   function addPlayer(pidStr,day,amount){
