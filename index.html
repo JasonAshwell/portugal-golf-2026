@@ -866,8 +866,8 @@ const DAY_CONFIG = {
   4: {
     title:'Day 4', emoji:'🔴', course:'Faldo Course', dayName:'Wednesday', teeTime:'9:30am',
     courseDesc:'Par 72 · 6,578m · Sir Nick Faldo · Final Day · Tour Championship Decider',
-    format:'4BBB', tcDay:true, matchPlay:false, color:'var(--red)',
-    formatHow:'Pure head-to-head golf — you play hole by hole against your opponent. <strong style="color:var(--text)">Win a hole</strong> (score lower on net stableford) and go "1 up." Tie a hole and it\'s halved. The match ends when one player leads by more holes than remain — e.g. "3&2" means 3 up with 2 to play. The match can also be decided on the 18th green. Your stableford score on every hole <strong style="color:var(--text)">simultaneously counts toward the Tour Championship</strong> — so it\'s a double battle to the finish! 🏆',
+    format:'Individual', tcDay:true, matchPlay:false, color:'var(--red)',
+    formatHow:'Everyone plays their own ball for individual stableford points. The <strong style="color:var(--text)">best individual score</strong> on the day takes €10, second takes €5. Your score <strong style="color:var(--text)">simultaneously counts toward the Tour Championship</strong> — so it\'s a double battle to the finish! Pairs still play head-to-head for <strong style="color:var(--text)">team points</strong> alongside the individual prizes. 🏆',
     courseUrl:'https://www.amendoeiraresort.com/en/golf/',
     scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf',
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
@@ -2000,37 +2000,6 @@ function buildMatchPlayResults(pairs,pMap,players,n){
       </div>`;
     });
     html+=`</div>`;
-  });
-  return html;
-}
-
-function buildDay4IndividualResults(pairs,pMap,players,n){
-  const allPlayerOpts=`<option value="">— Select —</option>`+
-    players.filter(p=>!p.noPrize).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  let html=`<div class="result-section">
-    <div class="result-section-title">🏆 Individual Prizes</div>
-    <div class="result-row">
-      <span class="result-label">🥇 Best Individual Score (€10)</span>
-      <select class="result-select" id="res-${n}-best_individual" onchange="saveDayResult(${n},'best_individual',this.value)">${allPlayerOpts}</select>
-    </div>
-    <div class="result-row">
-      <span class="result-label">🥈 2nd Best Individual Score (€5)</span>
-      <select class="result-select" id="res-${n}-second_individual" onchange="saveDayResult(${n},'second_individual',this.value)">${allPlayerOpts}</select>
-    </div>
-  </div>`;
-  // Match results for team scoring only
-  [[0,2],[1,3]].forEach(([pi1,pi2],grpIdx)=>{
-    const grp=grpIdx+1;
-    const pn1=pairName(pairs[pi1],pMap);
-    const pn2=pairName(pairs[pi2],pMap);
-    const matchOpts=`<option value="">— Select —</option><option value="${pi1}">${pn1}</option><option value="${pi2}">${pn2}</option><option value="half">½ Halved</option>`;
-    html+=`<div class="result-section">
-      <div class="result-section-title">Group ${grp}: ${pn1} vs ${pn2} <span style="font-size:.68rem;color:var(--accent);font-weight:400;">team points only</span></div>
-      <div class="result-row">
-        <span class="result-label">🏁 Match Result <span style="font-size:.7rem;color:var(--accent);">↳ team pts</span></span>
-        <select class="result-select" id="res-${n}-g${grp}match" onchange="saveDayResult(${n},'g${grp}match',this.value)">${matchOpts}</select>
-      </div>
-    </div>`;
   });
   return html;
 }
