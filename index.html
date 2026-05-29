@@ -115,6 +115,11 @@
     .comment-del{color:var(--muted);cursor:pointer;font-size:.75rem;padding:0 4px;align-self:flex-start;}
     .comment-del:hover{color:var(--red);}
     .photo-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:.88rem;}
+    /* Admin lock */
+    body.admin-locked input:not([type=file]), body.admin-locked select, body.admin-locked textarea{opacity:.5;cursor:not-allowed;}
+    #admin-lock-btn{opacity:.55;transition:opacity .2s;}
+    #admin-lock-btn:hover{opacity:1;}
+    body.admin-unlocked #admin-lock-btn{opacity:1;}
 
     /* ─── FORM ──────────────────────────────────── */
     .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:9px;}
@@ -481,6 +486,7 @@
       <span id="sync-dot" class="sync-dot off"></span>
       <span style="font-size:11px;color:var(--muted);user-select:none;">sync</span>
     </div>
+    <button id="admin-lock-btn" onclick="toggleAdminLock()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:6px;line-height:1;" title="Lock / Unlock editing">🔒</button>
   </div>
 </nav>
 
@@ -807,6 +813,23 @@
 
 <div id="toast"></div>
 
+<!-- Admin password prompt -->
+<div id="admin-prompt-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px 24px;width:100%;max-width:340px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+    <div style="font-weight:800;font-size:1.05rem;color:var(--text);margin-bottom:6px;">Unlock Editing</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:18px;">Enter the password to enter scores and results</div>
+    <input id="admin-pw-input" type="password" placeholder="Password"
+      style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:1rem;outline:none;box-sizing:border-box;"
+      onkeydown="if(event.key==='Enter')submitAdminPassword()">
+    <div id="admin-pw-error" style="display:none;color:var(--red);font-size:.8rem;margin-top:8px;">Incorrect password — try again</div>
+    <div style="display:flex;gap:10px;margin-top:18px;">
+      <button onclick="document.getElementById('admin-prompt-overlay').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--muted);cursor:pointer;font-size:.9rem;">Cancel</button>
+      <button onclick="submitAdminPassword()" style="flex:1;background:var(--accent);border:none;border-radius:8px;padding:10px;color:#000;cursor:pointer;font-weight:800;font-size:.9rem;">Unlock</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════
 // CONSTANTS & DEFAULTS
@@ -961,6 +984,7 @@ let logNextId = 100;
 //     No tokens, no accounts for anyone else needed.
 // ═══════════════════════════════════════════════════
 const FIREBASE_URL = 'https://golf-2026-4fe36-default-rtdb.firebaseio.com';  // ← paste your database URL here
+const ADMIN_PASSWORD = 'FishyFinger';  // ← change this to whatever password you want
 
 // ═══════════════════════════════════════════════════
 // CLOUDINARY — for photo uploads (free, no credit card)
@@ -1103,7 +1127,54 @@ function refreshCurrentTab(){
 }
 
 function ls(key,def){try{const v=JSON.parse(localStorage.getItem(key));return v!==null?v:def;}catch(e){return def;}}
+// ── Admin lock ────────────────────────────────────
+const ADMIN_KEY='amd_admin_unlocked';
+function isAdmin(){return localStorage.getItem(ADMIN_KEY)==='1';}
+function setAdminState(on){
+  if(on)localStorage.setItem(ADMIN_KEY,'1');
+  else localStorage.removeItem(ADMIN_KEY);
+  document.body.classList.toggle('admin-locked',!on);
+  document.body.classList.toggle('admin-unlocked',on);
+  const btn=document.getElementById('admin-lock-btn');
+  if(btn)btn.textContent=on?'🔓':'🔒';
+}
+function toggleAdminLock(){
+  if(isAdmin()){
+    setAdminState(false);
+    toast('🔒 Editing locked');
+  } else {
+    showAdminPrompt();
+  }
+}
+function showAdminPrompt(){
+  const el=document.getElementById('admin-prompt-overlay');
+  if(el){el.style.display='flex';document.getElementById('admin-pw-input').value='';document.getElementById('admin-pw-input').focus();}
+}
+function submitAdminPassword(){
+  const val=document.getElementById('admin-pw-input').value;
+  if(val===ADMIN_PASSWORD){
+    setAdminState(true);
+    document.getElementById('admin-prompt-overlay').style.display='none';
+    toast('🔓 Editing unlocked');
+  } else {
+    document.getElementById('admin-pw-error').style.display='block';
+    document.getElementById('admin-pw-input').value='';
+    document.getElementById('admin-pw-input').focus();
+  }
+}
+
+// Keys that require admin unlock to modify
+const LOCKED_KEYS=new Set([
+  K.scores, K.results, K.teams, K.pairings,
+  K.players, K.teamnames, K.tees, K.noSlope,
+  K.hcpov, K.summaries, K.aikey, K.aitoken,
+]);
+
 function lss(key,val){
+  if(!isAdmin()&&LOCKED_KEYS.has(key)){
+    toast('🔒 Scores, teams & pairings are locked — tap 🔒 in the top bar to unlock');
+    return;
+  }
   localStorage.setItem(key,JSON.stringify(val));
   schedulePush();
 }
@@ -2986,6 +3057,9 @@ function toast(msg){
 // INIT
 // ═══════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async ()=>{
+  // Restore admin lock state from previous session on this device
+  setAdminState(isAdmin());
+
   if(fbReady){
     setSyncDot('pending');
     const changed = await pullFromFirebase();
