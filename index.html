@@ -697,7 +697,7 @@
         </table>
       </div>
       <p style="font-size:.68rem;color:var(--muted);margin-top:10px;line-height:1.6;">
-        Days 1 &amp; 2 (4BBB): Best pair <strong style="color:var(--text)">€20/person</strong> · 2nd pair <strong style="color:var(--text)">€10/person</strong> · 2×NP/group <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
+        Days 1 &amp; 2 (4BBB): Best pair <strong style="color:var(--text)">€20 (€10 each)</strong> · 2nd pair <strong style="color:var(--text)">€10 (€5 each)</strong> · 2×NP/group <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
         Day 3 (Scramble): 1st <strong style="color:var(--text)">€20/person</strong> · 2nd <strong style="color:var(--text)">€10/person</strong> · NP <strong style="color:var(--text)">€1</strong> · NP18 <strong style="color:var(--text)">€1</strong> ·
         Day 4: Best individual <strong style="color:var(--text)">€10</strong> · 2nd <strong style="color:var(--text)">€5</strong> · 2×NP/group <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
         TC (7 players): <strong style="color:var(--text)">€40 / €20 / €10</strong>
@@ -858,7 +858,7 @@ const DAY_CONFIG = {
     title:'Day 3', emoji:'🟡', course:'Faldo Course', dayName:'Tuesday', teeTime:'9:30am',
     courseDesc:'Par 72 · 6,578m · Sir Nick Faldo',
     format:'2×2 Scramble', tcDay:false, matchPlay:false, color:'var(--gold)', isScramble:true,
-    formatHow:'Both players in the pair tee off, then the <strong style="color:var(--text)">best drive is chosen</strong> — both players pick up and play their next shot from that spot. The best shot is selected again every time until the ball is holed. You\'re aiming for the lowest score possible as a pair. Scoring is in stableford points. <strong style="color:var(--text)">No individual Tour Championship score today</strong> — rest those legs for the finale! Great format for bold, aggressive play.',
+    formatHow:'Both players in the pair tee off, then the <strong style="color:var(--text)">best drive is chosen</strong> — both players pick up and play their next shot from that spot. The best shot is selected again every time until the ball is holed. You\'re aiming for the lowest score possible as a pair. Each player\'s tee shot <strong style="color:var(--text)">must be used at least 8 times</strong> across the round. Scoring is in stableford points. <strong style="color:var(--text)">No individual Tour Championship score today</strong> — rest those legs for the finale! Great format for bold, aggressive play.',
     courseUrl:'https://www.amendoeiraresort.com/en/golf/',
     scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf',
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldoslop/Faldo_Course_Slope_Rating.pdf',
@@ -1886,11 +1886,11 @@ function build4BBBResults(pairs,pMap,n){
   let html=`<div class="result-section">
     <div class="result-section-title">🏆 Best Ball Prizes</div>
     <div class="result-row">
-      <span class="result-label">🥇 Best Pair Score (€20/person)</span>
+      <span class="result-label">🥇 Best Pair Score (€20 total — €10 each)</span>
       <select class="result-select" id="res-${n}-best_pair" onchange="saveDayResult(${n},'best_pair',this.value)">${allPairsOpts}</select>
     </div>
     <div class="result-row">
-      <span class="result-label">🥈 2nd Best Pair Score (€10/person)</span>
+      <span class="result-label">🥈 2nd Best Pair Score (€10 total — €5 each)</span>
       <select class="result-select" id="res-${n}-second_pair" onchange="saveDayResult(${n},'second_pair',this.value)">${allPairsOpts}</select>
     </div>
   </div>`;
@@ -2374,9 +2374,9 @@ function calculateWinnings(){
       addPlayer(dayData.best_individual,n,10);
       addPlayer(dayData.second_individual,n,5);
     } else {
-      // Days 1 & 2 (4BBB): best pair €20/person, 2nd pair €10/person
-      addPair(dayData.best_pair,n,20);
-      addPair(dayData.second_pair,n,10);
+      // Days 1 & 2 (4BBB): best pair €10/person (€20 total), 2nd pair €5/person (€10 total)
+      addPair(dayData.best_pair,n,10);
+      addPair(dayData.second_pair,n,5);
     }
 
     // NP winners
