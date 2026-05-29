@@ -1920,11 +1920,11 @@ function build4BBBResults(pairs,pMap,n){
     <div class="result-section-title">🏆 Best Ball Prizes</div>
     <div class="result-row">
       <span class="result-label">🥇 Best Pair Score (€20 total — €10 each)</span>
-      <select class="result-select" id="res-${n}-best_pair" onchange="saveDayResult(${n},'best_pair',this.value)">${allPairsOpts}</select>
+      <select class="result-select" id="res-${n}-best_pair" onchange="saveDayResult(${n},'best_pair',this.value);syncPairDropdowns(${n})">${allPairsOpts}</select>
     </div>
     <div class="result-row">
       <span class="result-label">🥈 2nd Best Pair Score (€10 total — €5 each)</span>
-      <select class="result-select" id="res-${n}-second_pair" onchange="saveDayResult(${n},'second_pair',this.value)">${allPairsOpts}</select>
+      <select class="result-select" id="res-${n}-second_pair" onchange="saveDayResult(${n},'second_pair',this.value);syncPairDropdowns(${n})">${allPairsOpts}</select>
     </div>
   </div>`;
   // Match results for team scoring only (no prize money)
@@ -2106,6 +2106,30 @@ function restoreResultValues(n,pairings,pMap,players,cfg){
     if(!el)return;
     el.value=val;
   });
+  // After restoring, sync pair dropdowns so saved values exclude each other
+  if(!cfg.isScramble&&n!==4)syncPairDropdowns(n);
+}
+
+function syncPairDropdowns(n){
+  const bestSel=document.getElementById(`res-${n}-best_pair`);
+  const secondSel=document.getElementById(`res-${n}-second_pair`);
+  if(!bestSel||!secondSel)return;
+  const bestVal=bestSel.value;
+  const secondVal=secondSel.value;
+  const pairings=getPairings();
+  const pairs=pairings&&pairings[n];
+  if(!pairs)return;
+  const pMap=playerMap();
+  // Rebuild best_pair: exclude whatever is selected as 2nd
+  bestSel.innerHTML=`<option value="">— Select —</option>`+
+    pairs.map((ids,i)=>i.toString()===secondVal?'':
+      `<option value="${i}"${i.toString()===bestVal?' selected':''}>${pairName(ids,pMap)}</option>`
+    ).join('');
+  // Rebuild second_pair: exclude whatever is selected as best
+  secondSel.innerHTML=`<option value="">— Select —</option>`+
+    pairs.map((ids,i)=>i.toString()===bestVal?'':
+      `<option value="${i}"${i.toString()===secondVal?' selected':''}>${pairName(ids,pMap)}</option>`
+    ).join('');
 }
 
 // Day 2 format toggle
