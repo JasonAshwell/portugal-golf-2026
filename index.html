@@ -1298,7 +1298,7 @@ function show(name,btn){
   btn.classList.add('active');
   if(name==='players'){renderPlayerTable();renderTeams();renderPairingsPreview();}
   if(name==='leaderboard')renderLeaderboard();
-  if(name==='prizes'){try{renderPrizes();}catch(e){console.error('[Prizes] renderPrizes error:',e);}try{renderDailyWinnersSummary();}catch(e){console.error('[Prizes] renderDailyWinnersSummary error:',e);}}
+  if(name==='prizes'){try{renderPrizes();}catch(e){console.error('[Prizes] renderPrizes error:',e);}try{renderDailyWinnersSummary();}catch(e){console.error('[Prizes] renderDailyWinnersSummary error:',e);}document.getElementById('tab-prizes').scrollTop=0;window.scrollTo(0,0);}
   if(name==='day1')renderDay(1);
   if(name==='day2')renderDay(2);
   if(name==='day3')renderDay(3);
