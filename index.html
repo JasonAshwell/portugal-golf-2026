@@ -1166,8 +1166,9 @@ function submitAdminPassword(){
 
 // ═══ REVEAL PAIRINGS HELPERS ═══
 function getRevealedDays(){return ls(K.revealed,{});}
-function isDayRevealed(n){const r=getRevealedDays();return!!r[n];}
+function isDayRevealed(n){if(n===1)return true; const r=getRevealedDays();return!!r[n];}
 function setDayRevealed(n,on){
+  if(n===1){toast('Day 1 is always revealed');return;}
   const r=getRevealedDays();
   if(on)r[n]=true; else delete r[n];
   lss(K.revealed,r);
@@ -1999,6 +2000,14 @@ function buildResultsCard(n,pairings,pMap,players,cfg){
   let html=`<div class="card"><div class="card-label">🏅 Results &amp; Prize Winners</div>`;
   if(!pairings||!pairings[n]){
     html+=`<p style="font-size:.85rem;color:var(--muted);">Generate pairings first to record results.</p></div>`;
+    return html;
+  }
+  if(!isDayRevealed(n)&&!isAdmin()){
+    html+=`<div style="text-align:center;padding:24px 12px;">
+      <div style="font-size:2rem;margin-bottom:8px;">⏳</div>
+      <div style="font-size:.95rem;font-weight:700;margin-bottom:4px;">Results not yet available</div>
+      <div style="font-size:.82rem;color:var(--muted);">Pairings haven't been revealed yet — results will appear here once the day is released.</div>
+    </div></div>`;
     return html;
   }
   const pairs=pairings[n];
