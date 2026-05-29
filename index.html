@@ -1926,6 +1926,37 @@ function buildSkinsResults(players){
   </div>`;
 }
 
+function buildDay4IndividualResults(pairs,pMap,players,n){
+  const allPlayerOpts=`<option value="">— Select —</option>`+
+    players.filter(p=>!p.noPrize).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  let html=`<div class="result-section">
+    <div class="result-section-title">🏆 Individual Prizes</div>
+    <div class="result-row">
+      <span class="result-label">🥇 Best Individual Score (€10)</span>
+      <select class="result-select" id="res-${n}-best_individual" onchange="saveDayResult(${n},'best_individual',this.value)">${allPlayerOpts}</select>
+    </div>
+    <div class="result-row">
+      <span class="result-label">🥈 2nd Best Individual Score (€5)</span>
+      <select class="result-select" id="res-${n}-second_individual" onchange="saveDayResult(${n},'second_individual',this.value)">${allPlayerOpts}</select>
+    </div>
+  </div>`;
+  // Match results for team scoring only
+  [[0,2],[1,3]].forEach(([pi1,pi2],grpIdx)=>{
+    const grp=grpIdx+1;
+    const pn1=pairName(pairs[pi1],pMap);
+    const pn2=pairName(pairs[pi2],pMap);
+    const matchOpts=`<option value="">— Select —</option><option value="${pi1}">${pn1}</option><option value="${pi2}">${pn2}</option><option value="half">½ Halved</option>`;
+    html+=`<div class="result-section">
+      <div class="result-section-title">Group ${grp}: ${pn1} vs ${pn2} <span style="font-size:.68rem;color:var(--accent);font-weight:400;">team points only</span></div>
+      <div class="result-row">
+        <span class="result-label">🏁 Match Result <span style="font-size:.7rem;color:var(--accent);">↳ team pts</span></span>
+        <select class="result-select" id="res-${n}-g${grp}match" onchange="saveDayResult(${n},'g${grp}match',this.value)">${matchOpts}</select>
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
 function buildScrambleResults(pairs,pMap,players,n){
   const allPairsOpts=`<option value="">— Select —</option>`+pairs.map((ids,i)=>`<option value="${i}">${pairName(ids,pMap)}</option>`).join('');
   let html=`<div class="result-section">
