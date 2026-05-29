@@ -3382,10 +3382,10 @@ function anyPreviousDayScores(n){
   return false;
 }
 function summaryCardVisible(n){
-  // Day 1: show if pre-tour mode (always for day 1) — we always show it for day 1
+  // Day 1: always show (pre-tour or real summary)
   if(n===1)return true;
-  // Other days: show if this day or any earlier day has scores
-  return dayHasScores(n)||anyPreviousDayScores(n);
+  // Days 2-4: only show if THIS day has scores entered
+  return dayHasScores(n);
 }
 function isPreTourMode(n){
   // Day 1 only: pre-tour mode when no Day 1 scores yet
