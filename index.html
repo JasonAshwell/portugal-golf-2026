@@ -162,14 +162,14 @@
     /* ─── TEAMS ─────────────────────────────────── */
     .teams2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .t2box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-    .t2head{padding:10px 13px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+    .t2head{padding:10px 13px;display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
     .t2head-a{background:rgba(0,230,118,.12);border-bottom-color:rgba(0,230,118,.2);}
     .t2head-b{background:rgba(79,195,247,.12);border-bottom-color:rgba(79,195,247,.2);}
-    .t2name-input{background:transparent;border:none;font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;outline:none;min-width:0;max-width:100px;}
+    .t2name-input{background:transparent;border:none;font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;outline:none;min-width:0;width:100%;}
     .t2name-input-a{color:var(--accent);}
     .t2name-input-b{color:var(--blue);}
     .t2name-input::placeholder{opacity:.5;}
-    .t2stats{font-size:.66rem;opacity:.8;white-space:nowrap;}
+    .t2stats{font-size:.66rem;opacity:.8;white-space:nowrap;flex-shrink:0;}
     .t2stats-a{color:var(--accent);}.t2stats-b{color:var(--blue);}
     .t2row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);}
     .t2row:last-child{border-bottom:none;}
@@ -1466,6 +1466,7 @@ function cycleConf(id){
 // TEAMS
 // ═══════════════════════════════════════════════════
 function drawTeams(){
+  if(!isAdmin()){showAdminPrompt();return;}
   const players=getPlayers();
   if(players.length<2)return;
 
