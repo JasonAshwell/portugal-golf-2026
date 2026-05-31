@@ -1342,7 +1342,171 @@ function playerDayHcp(player,n){
 // For player table: Yellow-tee course HCP (no confidence adj — just slope)
 function playerCourseHcpYellow(player,ck){return courseHcp(player.hcp,COURSE_TEES[ck][0]);}
 function catKey(c){return c.replace(/[^a-zA-Z0-9]/g,'_');}
-function escQ(s){return s.replace(/'/g,"\\'");}
+function escQ(s){return s.replace(/'/g,"\\'")}
+
+// ── Official Format Handicaps ──────────────────────
+function calcOfficialHcps(n){
+  // Full Course Handicap = round(HI × slope/113 + (CR - Par))
+  const td=getTeeData(n);
+  const players=getPlayers();
+  const pairings=getPairings();
+  const cfg=DAY_CONFIG[n];
+  const pairs=pairings&&pairings[n];
+  const pMap={};players.forEach(p=>pMap[p.id]=p);
+
+  function fullCourseHcp(p){
+    return Math.round(p.hcp*(td.slope/113)+(td.cr-td.par));
+  }
+
+  const results=[];
+
+  if(cfg.isScramble){
+    // Scramble: lower HCP × 35% + higher HCP × 15% = team handicap
+    if(!pairs){return null;}
+    // Use first 2 pairs (one per group — pairs 0&2 are group 1, 1&3 are group 2... but scramble has 4 pairs total as 2 teams of 2)
+    // Actually in scramble the pairings are: pair[0], pair[1] (Team A), pair[2], pair[3] (Team B)
+    // Each pair plays as a scramble team
+    pairs.forEach((ids,i)=>{
+      const ps=ids.map(id=>pMap[id]).filter(Boolean);
+      if(ps.length<2)return;
+      const hcps=ps.map(p=>fullCourseHcp(p));
+      const sorted=[...ps].sort((a,b)=>fullCourseHcp(a)-fullCourseHcp(b));
+      const lower=fullCourseHcp(sorted[0]);
+      const higher=fullCourseHcp(sorted[1]);
+      const teamHcp=Math.round(lower*0.35+higher*0.15);
+      results.push({
+        type:'scramble',pairIdx:i,
+        players:sorted.map(p=>({...p,courseHcp:fullCourseHcp(p)})),
+        lower,higher,teamHcp,
+        lowerPct:35,higherPct:15,
+      });
+    });
+  } else if(n===4){
+    // Individual: 100% of Course HCP
+    players.forEach(p=>{
+      const ch=fullCourseHcp(p);
+      results.push({type:'individual',player:p,courseHcp:ch,allowance:ch});
+    });
+  } else {
+    // 4BBB: 85% per player
+    if(!pairs){return null;}
+    pairs.forEach((ids,i)=>{
+      const ps=ids.map(id=>pMap[id]).filter(Boolean);
+      if(!ps.length)return;
+      const members=ps.map(p=>({...p,courseHcp:fullCourseHcp(p),allowance:Math.round(fullCourseHcp(p)*0.85)}));
+      results.push({type:'4bbb',pairIdx:i,players:members});
+    });
+  }
+  return results;
+}
+
+function showOfficialFormat(n){
+  const container=document.getElementById(`official-format-${n}`);
+  if(!container)return;
+
+  // Toggle off if already showing
+  if(container.innerHTML.trim()){container.innerHTML='';return;}
+
+  const cfg=DAY_CONFIG[n];
+  const td=getTeeData(n);
+  const data=calcOfficialHcps(n);
+
+  if(!data){
+    container.innerHTML=`<div style="font-size:.82rem;color:var(--muted);padding:10px 0;">⚠️ Generate pairings first to calculate format handicaps.</div>`;
+    return;
+  }
+
+  const pMap={};getPlayers().forEach(p=>pMap[p.id]=p);
+  const pairings=getPairings();
+  const names=getTeamNames();
+
+  let html=`<div style="margin-top:12px;padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">📐 Official Format Handicaps</div>
+      <div style="font-size:.7rem;color:var(--muted);">${td.name} tees · Slope ${td.slope} · CR ${td.cr} · Par ${td.par}</div>
+    </div>`;
+
+  if(cfg.isScramble){
+    html+=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px;">Scramble allowance: lower HCP × 35% + higher HCP × 15% = team handicap</div>`;
+    data.forEach(d=>{
+      const pair=pairings&&pairings[n]&&pairings[n][d.pairIdx];
+      html+=`<div style="margin-bottom:10px;padding:10px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:6px;">Pair ${d.pairIdx+1}: ${d.players.map(p=>p.name).join(' & ')}</div>
+        ${d.players.map((p,i)=>{
+          const isLower=i===0;
+          const pct=isLower?35:15;
+          const contrib=Math.round(p.courseHcp*(pct/100));
+          return`<div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;padding:3px 0;">
+            <span>${p.name} <span style="color:var(--muted);font-size:.72rem;">(HI ${p.hcp} → Course ${p.courseHcp})</span></span>
+            <span style="color:var(--text);font-weight:700;">${pct}% = <strong>${contrib}</strong></span>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;font-weight:800;padding-top:6px;margin-top:6px;border-top:1px solid var(--border);">
+          <span style="color:var(--gold);">🏌️ Team Handicap</span>
+          <span style="color:var(--gold);font-size:1rem;">⛳ ${d.teamHcp}</span>
+        </div>
+      </div>`;
+    });
+  } else if(n===4){
+    html+=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px;">Individual allowance: 100% of Course Handicap</div>`;
+    html+=`<div style="display:grid;gap:5px;">`;
+    data.forEach(d=>{
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;font-size:.82rem;padding:7px 10px;background:var(--bg2);border-radius:7px;border:1px solid var(--border);">
+        <span>${d.player.name} <span style="color:var(--muted);font-size:.72rem;">(HI ${d.player.hcp} → Course ${d.courseHcp})</span></span>
+        <strong style="color:var(--accent);">⛳ ${d.allowance}</strong>
+      </div>`;
+    });
+    html+=`</div>`;
+  } else {
+    html+=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px;">4BBB allowance: 85% of Course Handicap per player</div>`;
+    data.forEach(d=>{
+      html+=`<div style="margin-bottom:8px;padding:10px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:6px;">Pair ${d.pairIdx+1}</div>
+        ${d.players.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;font-size:.82rem;padding:3px 0;">
+          <span>${p.name} <span style="color:var(--muted);font-size:.72rem;">(HI ${p.hcp} → Course ${p.courseHcp})</span></span>
+          <strong style="color:var(--accent);">85% = ⛳ ${p.allowance}</strong>
+        </div>`).join('')}
+      </div>`;
+    });
+  }
+
+  // Apply button
+  html+=`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn btn-sm" style="background:var(--accent);color:#000;" onclick="applyOfficialFormat(${n})">✅ Apply to Handicaps</button>
+    <button class="btn btn-sm btn-ghost" onclick="document.getElementById('official-format-${n}').innerHTML=''">✕ Close</button>
+  </div>`;
+
+  html+=`</div>`;
+  container.innerHTML=html;
+}
+
+function applyOfficialFormat(n){
+  if(!isAdmin()){showAdminPrompt();return;}
+  const data=calcOfficialHcps(n);
+  if(!data){toast('⚠️ Generate pairings first');return;}
+  const cfg=DAY_CONFIG[n];
+
+  if(cfg.isScramble){
+    // For scramble: save team handicap as override for the "lower" player (pair representative)
+    // and the individual course hcps for each player
+    const pairings=getPairings();
+    data.forEach(d=>{
+      d.players.forEach((p,i)=>{
+        const isLower=i===0;
+        const pct=isLower?35:15;
+        const contrib=Math.round(p.courseHcp*(pct/100));
+        saveDayHcpOverride(n,p.id,contrib);
+      });
+    });
+  } else if(n===4){
+    data.forEach(d=>saveDayHcpOverride(n,d.player.id,d.allowance));
+  } else {
+    data.forEach(d=>d.players.forEach(p=>saveDayHcpOverride(n,p.id,p.allowance)));
+  }
+
+  toast('✅ Official handicaps applied!');
+  renderDay(n);
+}
 
 function dotColor(position,totalScore){
   if(totalScore>=7)return'#00e676';
@@ -1769,6 +1933,12 @@ function renderDay(n){
     </div>
     <div class="tee-info-row">${noSlope?'<strong style="color:var(--accent);">No slope adjustment</strong> — playing off Handicap Index directly':`Selected: <strong style="color:var(--text);">${activeTee}</strong> · CR ${td.cr} · Slope ${td.slope} · Par ${td.par}`}</div>
   </div>`;
+
+  // Official Format button
+  html+=`<div style="margin-top:10px;">
+    <button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border);" onclick="showOfficialFormat(${n})">📐 Official Format Handicaps</button>
+  </div>`;
+  html+=`<div id="official-format-${n}"></div>`;
 
   // Course links
   html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
