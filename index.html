@@ -1328,6 +1328,14 @@ function saveDayHcpOverride(n,pid,rawVal){
     } else if(!isOv&&btn){btn.remove();}
   }
 }
+function clearAllDayHcpOverrides(n){
+  if(!isAdmin()){showAdminPrompt();return;}
+  const all=ls(K.hcpov,{});
+  delete all[n];
+  lss(K.hcpov,all);
+  toast('↺ Handicap overrides cleared — using normal handicaps');
+  renderDay(n);
+}
 function clearDayHcpOverride(n,pid){
   saveDayHcpOverride(n,pid,null);
   const p=getPlayers().find(p=>p.id===pid);
@@ -1470,9 +1478,10 @@ function showOfficialFormat(n){
     });
   }
 
-  // Apply button
+  // Apply / Reset buttons
   html+=`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-    <button class="btn btn-sm" style="background:var(--accent);color:#000;" onclick="applyOfficialFormat(${n})">✅ Apply to Handicaps</button>
+    <button class="btn btn-sm" onclick="applyOfficialFormat(${n})">✅ Apply to Handicaps</button>
+    <button class="btn btn-sm btn-ghost" onclick="clearAllDayHcpOverrides(${n})">↺ Reset to Normal</button>
     <button class="btn btn-sm btn-ghost" onclick="document.getElementById('official-format-${n}').innerHTML=''">✕ Close</button>
   </div>`;
 
@@ -1935,8 +1944,10 @@ function renderDay(n){
   </div>`;
 
   // Official Format button
-  html+=`<div style="margin-top:10px;">
-    <button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border);" onclick="showOfficialFormat(${n})">📐 Official Format Handicaps</button>
+  const hasOfficialHcps=Object.keys(getDayHcpOverrides(n)).length>0;
+  html+=`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <button class="btn btn-sm btn-ghost" onclick="showOfficialFormat(${n})">📐 Official Format Handicaps${hasOfficialHcps?' <span style="color:var(--accent);font-size:.7rem;">✓ Active</span>':''}</button>
+    ${hasOfficialHcps?`<button class="btn btn-sm btn-ghost" style="font-size:.75rem;opacity:.7;" onclick="clearAllDayHcpOverrides(${n})">↺ Reset to Normal</button>`:''}
   </div>`;
   html+=`<div id="official-format-${n}"></div>`;
 
