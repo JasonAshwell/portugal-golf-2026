@@ -540,10 +540,18 @@
     </div>
     <div class="card">
       <div class="card-label">🏌️ The Courses</div>
-      <p style="font-size:.87rem;color:var(--muted);line-height:1.65;margin-bottom:12px;">
+      <p style="font-size:.87rem;color:var(--muted);line-height:1.65;margin-bottom:14px;">
         <strong style="color:var(--accent)">Faldo Course</strong> — Par 72 · 6,578m · Designed by Sir Nick Faldo. Winner of Portugal's Best Golf Course 2016. Used Days 1, 3 &amp; 4.<br><br>
         <strong style="color:var(--blue)">O'Connor Jnr. Course</strong> — Par 72 · Water hazards throughout. Designed by Christy O'Connor Jnr. Used Day 2 only.
       </p>
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;">🎥 Faldo Course Flyover</div>
+      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-bottom:14px;">
+        <iframe src="https://www.youtube.com/embed/vP5kC199zU0" title="Faldo Course Flyover" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:8px;"></iframe>
+      </div>
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--blue);margin-bottom:6px;">🎥 O'Connor Jnr. Course Flyover</div>
+      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-bottom:14px;">
+        <iframe src="https://www.youtube.com/embed/ntZZNmU06P8" title="O'Connor Jnr. Course Flyover" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:8px;"></iframe>
+      </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border);">
         <a href="https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/faldo/Faldo_Course_Scorecard.pdf" target="_blank" rel="noopener" class="course-link-btn" style="border-color:rgba(0,230,118,.3);">📋 Faldo Scorecard</a>
         <a href="https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf" target="_blank" rel="noopener" class="course-link-btn" style="border-color:rgba(79,195,247,.3);">📋 O'Connor Scorecard</a>
@@ -1952,10 +1960,12 @@ function renderDay(n){
   html+=`<div id="official-format-${n}"></div>`;
 
   // Course links
+  const flyoverUrl=cfg.course==='Faldo Course'?'https://youtu.be/vP5kC199zU0':cfg.course.includes("O'Connor")?'https://youtu.be/ntZZNmU06P8':'';
   html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
     <a href="${cfg.scorecardUrl}" target="_blank" rel="noopener" class="course-link-btn">📋 Scorecard</a>
     <a href="${cfg.slopeUrl}" target="_blank" rel="noopener" class="course-link-btn">📊 Slope Rating</a>
     <a href="${cfg.courseUrl}" target="_blank" rel="noopener" class="course-link-btn">🌐 Course Info</a>
+    ${flyoverUrl?`<a href="${flyoverUrl}" target="_blank" rel="noopener" class="course-link-btn">🎥 Course Flyover</a>`:''}
   </div>`;
 
   html+=`</div>`;
