@@ -198,10 +198,10 @@
     .group-label{padding:8px 12px;font-size:.65rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border);}
     .group-label-1{background:rgba(0,230,118,.07);color:var(--accent);}
     .group-label-2{background:rgba(79,195,247,.07);color:var(--blue);}
-    .pair-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);}
+    .pair-row{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-bottom:1px solid var(--border);}
     .pair-row:last-child{border-bottom:none;}
-    .pair-idx{font-size:.65rem;font-weight:800;color:var(--muted);min-width:14px;word-break:break-word;white-space:normal;}
-    .pair-players{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .pair-idx{font-size:.65rem;font-weight:800;color:var(--muted);word-break:break-word;white-space:normal;}
+    .pair-players{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
     .pair-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;}
     .pair-avatar-ph{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:900;color:#000;flex-shrink:0;}
     .pair-name{font-size:.88rem;font-weight:700;}
@@ -420,7 +420,7 @@
       .day-title{font-size:.95rem;}
       .day-num-badge{width:30px;height:30px;font-size:.78rem;}
       /* Pair rows */
-      .pair-row{flex-wrap:wrap;gap:6px;}
+      .pair-row{gap:3px;}
       .pair-name{font-size:.82rem;}
       /* Results */
       .result-row{flex-wrap:wrap;gap:6px;}
@@ -2083,7 +2083,7 @@ function buildGroupPairs(n,pairs,pMap,cfg,grpIdx){
     if(!ids)return;
     const teamLabel = pi===0 ? (names.A||'Team A') : (names.B||'Team B');
     html+=`<div class="pair-row">
-      <span class="pair-idx" style="font-size:.65rem;min-width:44px;text-align:center;">${teamLabel}</span>
+      <span class="pair-idx">${teamLabel}</span>
       <div class="pair-players">`;
     ids.forEach((id,i)=>{
       const p=pMap[id];if(!p)return;
