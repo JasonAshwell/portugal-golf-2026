@@ -2035,8 +2035,8 @@ function buildPairingsCard(n,pairings,pMap,players,cfg){
       // Day 4: 1v1 individual matches
       // Group 1: pairs[0] (A[0]vsB[2]) and pairs[1] (A[2]vsB[3])
       // Group 2: pairs[2] (A[1]vsB[0]) and pairs[3] (A[3]vsB[1])
-      html+=buildDay4GroupDisplay(pairs,pMap,0); // Group 1
-      html+=buildDay4GroupDisplay(pairs,pMap,1); // Group 2
+      html+=buildDay4GroupDisplay(pairs,pMap,0,n); // Group 1
+      html+=buildDay4GroupDisplay(pairs,pMap,1,n); // Group 2
     } else {
       // 4-ball 1: pairs[0] (Team A) vs pairs[2] (Team B)
       // 4-ball 2: pairs[1] (Team A) vs pairs[3] (Team B)
@@ -2072,7 +2072,9 @@ function buildGroupPairs(n,pairs,pMap,cfg,grpIdx){
     ids.forEach((id,i)=>{
       const p=pMap[id];if(!p)return;
       html+=miniAvatar(p,p.idx);
-      html+=`<span class="pair-name">${p.name}</span><span class="pair-hcp">(${p.hcp})</span>`;
+      const dHcp=playerDayHcp(p,n);
+      const hcpLabel=dHcp!==p.hcp?`${dHcp} <span style="color:var(--muted);font-size:.65rem;">(HI ${p.hcp})</span>`:dHcp;
+      html+=`<span class="pair-name">${p.name}</span><span class="pair-hcp">(${hcpLabel})</span>`;
       if(i < ids.length-1){
         if(cfg.matchPlay){
           html+=`<span class="vs-chip vs-chip-match">VS</span>`;
@@ -2099,12 +2101,16 @@ function buildGroupPairs(n,pairs,pMap,cfg,grpIdx){
   return html;
 }
 
-function buildDay4GroupDisplay(pairs,pMap,grpIdx){
+function buildDay4GroupDisplay(pairs,pMap,grpIdx,n){
   // grpIdx 0 → pairs[0] and pairs[1] (Group 1)
   // grpIdx 1 → pairs[2] and pairs[3] (Group 2)
   const p1idx=grpIdx*2, p2idx=grpIdx*2+1;
   const grpLabel=grpIdx===0?'Group 1':'Group 2';
   const grpCls=grpIdx===0?'group-label-1':'group-label-2';
+  function hcpLabel(p){
+    const dHcp=playerDayHcp(p,n);
+    return dHcp!==p.hcp?`${dHcp} <span style="color:var(--muted);font-size:.65rem;">(HI ${p.hcp})</span>`:dHcp;
+  }
   let html=`<div class="group-box"><div class="group-label ${grpCls}">${grpLabel} — Individual Matches</div>`;
   [p1idx,p2idx].forEach((pi,i)=>{
     const ids=pairs[pi];
@@ -2114,9 +2120,9 @@ function buildDay4GroupDisplay(pairs,pMap,grpIdx){
     if(i>0)html+=`<div style="height:6px;"></div>`;
     html+=`<div class="pair-row">
       <div class="pair-players">
-        ${miniAvatar(pA,pA.idx)}<span class="pair-name">${pA.name}</span><span class="pair-hcp">(${pA.hcp})</span>
+        ${miniAvatar(pA,pA.idx)}<span class="pair-name">${pA.name}</span><span class="pair-hcp">(${hcpLabel(pA)})</span>
         <span class="vs-chip vs-chip-match">VS</span>
-        ${miniAvatar(pB,pB.idx)}<span class="pair-name">${pB.name}</span><span class="pair-hcp">(${pB.hcp})</span>
+        ${miniAvatar(pB,pB.idx)}<span class="pair-name">${pB.name}</span><span class="pair-hcp">(${hcpLabel(pB)})</span>
       </div>
     </div>`;
   });
