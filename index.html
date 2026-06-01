@@ -166,6 +166,8 @@
     .t2head-a{background:rgba(0,230,118,.12);border-bottom-color:rgba(0,230,118,.2);}
     .t2head-b{background:rgba(79,195,247,.12);border-bottom-color:rgba(79,195,247,.2);}
     .t2name-input{background:transparent;border:none;font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;outline:none;min-width:0;width:100%;}
+    .t2name-editable{background:transparent;font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;outline:none;min-width:0;flex:1;word-break:break-word;white-space:normal;cursor:text;line-height:1.4;padding:1px 0;}
+    .t2name-editable:empty:before{content:attr(data-placeholder);opacity:.4;pointer-events:none;}
     .t2name-input-a{color:var(--accent);}
     .t2name-input-b{color:var(--blue);}
     .t2name-input::placeholder{opacity:.5;}
@@ -198,7 +200,7 @@
     .group-label-2{background:rgba(79,195,247,.07);color:var(--blue);}
     .pair-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);}
     .pair-row:last-child{border-bottom:none;}
-    .pair-idx{font-size:.65rem;font-weight:800;color:var(--muted);min-width:14px;}
+    .pair-idx{font-size:.65rem;font-weight:800;color:var(--muted);min-width:14px;word-break:break-word;white-space:normal;}
     .pair-players{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
     .pair-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;}
     .pair-avatar-ph{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:900;color:#000;flex-shrink:0;}
@@ -1755,11 +1757,15 @@ function renderTeams(){
         </select>
       </div>`;
     }).join('');
+    const teamNameVal=(names[key]||'Team '+key).replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return`<div class="t2box">
       <div class="t2head ${headCls}">
-        <input class="t2name-input ${nameInputCls}" value="${(names[key]||'Team '+key).replace(/"/g,'&quot;')}"
-          placeholder="Team ${key}" onchange="updateTeamName('${key}',this.value)" style="flex:1;">
-        <span class="${statsCol}" style="font-size:.66rem;text-align:right;">
+        <div class="t2name-editable ${nameInputCls}" contenteditable="true"
+          data-placeholder="Team ${key}"
+          onblur="updateTeamName('${key}',this.innerText.trim())"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+        >${teamNameVal}</div>
+        <span class="${statsCol}" style="font-size:.66rem;text-align:right;flex-shrink:0;">
           HCP ${totalHcp} · Eff ${totalEff}<br>
           <span class="t2conf-sum">${confSummary(ids)}</span>
         </span>
