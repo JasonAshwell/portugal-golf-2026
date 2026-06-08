@@ -488,6 +488,7 @@
       <span id="sync-dot" class="sync-dot off"></span>
       <span style="font-size:11px;color:var(--muted);user-select:none;">sync</span>
     </div>
+    <button onclick="openGuide()" style="background:none;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;line-height:1;color:var(--muted);" title="User Guide">?</button>
     <button id="admin-lock-btn" onclick="toggleAdminLock()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:6px;line-height:1;" title="Lock / Unlock editing">🔒</button>
   </div>
 </nav>
@@ -3969,6 +3970,141 @@ window.debugGolf=function(){
   console.groupEnd();
   return{results:r,pairings:p};
 };
+
+// ═══════════════════════════════════════════════════
+// USER GUIDE
+// ═══════════════════════════════════════════════════
+function openGuide(){document.getElementById('guide-overlay').style.display='flex';}
+function closeGuide(){document.getElementById('guide-overlay').style.display='none';}
+function toggleGuideSection(id){
+  const el=document.getElementById(id);
+  const icon=document.getElementById(id+'-icon');
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  if(icon)icon.textContent=open?'▶':'▼';
+}
 </script>
+
+<!-- ══════════ USER GUIDE MODAL ══════════ -->
+<div id="guide-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:3000;align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;padding:0;overflow:hidden;">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);background:var(--bg3);">
+      <div>
+        <div style="font-size:1rem;font-weight:900;">📖 User Guide</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">Portugal Golf 2026</div>
+      </div>
+      <button onclick="closeGuide()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);cursor:pointer;font-size:.85rem;font-weight:700;">✕ Close</button>
+    </div>
+    <!-- Sections -->
+    <div style="padding:12px 16px;">
+
+      <!-- HOME -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-home')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          🏠 Home <span id="guide-home-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-home" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          The home screen gives you a quick overview of the whole trip. At the top you'll see the number of players, days, Tour Championship pot and the current leader.<br><br>
+          <strong style="color:var(--text);">Tour Championship</strong> — Cumulative Stableford points across Days 1, 2 &amp; 4. €10 entry per player (7 players = €70 pot). 🥇 €40 · 🥈 €20 · 🥉 €10.<br><br>
+          <strong style="color:var(--text);">Daily Prizes Breakdown</strong> — Shows prize money available each day. Days 1 &amp; 2 have a €40 pot, Day 3 (Scramble) €35, Day 4 (Individual) €25.<br><br>
+          <strong style="color:var(--text);">The Courses</strong> — Flyover videos and links to scorecards, slope ratings and course info for both the Faldo and O'Connor Jnr. courses.
+        </div>
+      </div>
+
+      <!-- PLAYERS & TEAMS -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-players')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          👥 Players &amp; Teams <span id="guide-players-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-players" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          <strong style="color:var(--text);">Player Roster</strong> — Each player has a name, handicap index and confidence rating. Tap a player's avatar to open their profile and add a photo, bio and custom ratings.<br><br>
+          <strong style="color:var(--text);">Confidence ratings</strong> — 🟢 Plays to handicap (−1 effective), 🟡 About right (no change), 🔴 Might struggle (+1 effective). Used for team balancing only.<br><br>
+          <strong style="color:var(--text);">Re-draw Teams</strong> — Splits 8 players into two balanced teams of 4 based on effective handicap. Hit it multiple times to cycle through different balanced combinations. The <strong style="color:var(--text);">balance tolerance</strong> (shots) controls how many options are available — higher = more variety, slightly less balance.<br><br>
+          <strong style="color:var(--text);">Generate Pairings</strong> — Creates pairings for all 4 days automatically. The schedule is optimised so every player meets every opponent across the trip, with no one facing the same person more than twice.<br><br>
+          <strong style="color:var(--text);">Swap players</strong> — Use the Swap dropdown on any player in the team cards to manually swap them with someone from the other team.
+        </div>
+      </div>
+
+      <!-- DAYS 1–4 -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-days')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          📅 Days 1–4 <span id="guide-days-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-days" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          Each day tab shows the format, tee picker, pairings, results and an AI summary.<br><br>
+          <strong style="color:var(--text);">Tee picker</strong> — Select the tee colour for the day. The slope and course rating update automatically and feed into the handicap calculations.<br><br>
+          <strong style="color:var(--text);">📐 Official Format Handicaps</strong> — Calculates each player's correct handicap allowance for the day's format (85% for 4BBB, 35%/15% for Scramble, 100% for Individual) using slope and course rating. Tap <em>Apply</em> to use these in scoring. Tap <em>↺ Reset to Normal</em> to go back to standard handicaps.<br><br>
+          <strong style="color:var(--text);">Pairings card</strong> — Shows the groups for the day. Admins can reveal or hide pairings for each day — non-admins see a placeholder until revealed. Day 1 is always visible.<br><br>
+          <strong style="color:var(--text);">Results &amp; Prize Winners</strong> — Enter the winning pair/player for each prize category, nearest pin winners and match results for team scoring. Everything saves automatically.<br><br>
+          <strong style="color:var(--text);">🤣 Day Summary / 🎙 Pre-Tour Preview</strong> — Hit Generate to get an AI-written humorous summary. Before Day 1 scores are in it writes a savage pre-tour player preview. Needs a Cloudflare Worker configured (tap ⚙).
+        </div>
+      </div>
+
+      <!-- PRIZES -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-prizes')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          💰 Prizes <span id="guide-prizes-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-prizes" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          <strong style="color:var(--text);">Money Leaderboard</strong> — Shows how much each player has won across all days. Updates automatically as results are entered. The totals row shows won / available so you can see which days still need results entered.<br><br>
+          <strong style="color:var(--text);">Tour Championship</strong> — Live standings based on cumulative Stableford scores across Days 1, 2 &amp; 4. 🥇 €40 · 🥈 €20 · 🥉 €10.<br><br>
+          <strong style="color:var(--text);">Daily Results Summary</strong> — All prize categories for all 4 days. Shows <em>TBD</em> until a winner has been entered on the relevant day tab.
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-lb')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          🏆 Leaderboard <span id="guide-lb-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-lb" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          <strong style="color:var(--text);">Tour Championship Standings</strong> — Ranked by total Stableford points across Days 1, 2 &amp; 4. Each day's score shown individually.<br><br>
+          <strong style="color:var(--text);">Team Scores</strong> — Running team totals across all 4 days. Days 1–3 award points for match results; Day 4 awards points for individual 1v1 match wins.
+        </div>
+      </div>
+
+      <!-- PHOTOS -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-photos')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          📸 Photos <span id="guide-photos-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-photos" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          Photos are organised by day (Days 1–6). Select a day, then tap <strong style="color:var(--text);">📷 Add Photo</strong> to upload from your device. Enter your name so everyone knows who took it.<br><br>
+          Tap any photo to view it full size. You can add comments on any photo — they sync to all devices in real time.<br><br>
+          Photos are stored in the cloud (Cloudinary) so they're available to everyone regardless of device.
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-admin')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          🔒 Admin &amp; Locking <span id="guide-admin-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-admin" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          <strong style="color:var(--text);">🔒 Lock button</strong> (top-right of nav) — Tap to lock or unlock editing. Unlock requires the admin password. The lock is per-device — each device must unlock independently.<br><br>
+          <strong style="color:var(--text);">What's locked</strong> — Scores, results, teams, pairings, players, team names, tees, handicap overrides, AI settings and pairings reveal state all require admin to change.<br><br>
+          <strong style="color:var(--text);">What's free</strong> — Player profiles, ratings, photos, logistics and comments can be edited by anyone.<br><br>
+          <strong style="color:var(--text);">👁 Reveal Pairings</strong> — On each day tab, admins can reveal or hide that day's pairings. Non-admins see a placeholder until revealed. Day 1 is always visible.<br><br>
+          <strong style="color:var(--text);">🔓 Unlock Redraw for All</strong> — On the Players tab, admins can temporarily unlock team redrawing and balance tolerance for everyone — useful for letting the group play around before the trip. Lock it again once you go live.
+        </div>
+      </div>
+
+      <!-- SYNC -->
+      <div style="margin-bottom:6px;">
+        <button onclick="toggleGuideSection('guide-sync')" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;color:var(--text);">
+          🔄 Sync &amp; Data <span id="guide-sync-icon" style="color:var(--muted);font-size:.75rem;">▶</span>
+        </button>
+        <div id="guide-sync" style="display:none;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;font-size:.83rem;line-height:1.7;color:var(--muted);">
+          Everything syncs automatically across all devices every 15 seconds via Firebase. The <strong style="color:var(--text);">sync dot</strong> in the top bar shows the status — green means in sync, grey means offline or waiting.<br><br>
+          Data is saved locally on your device immediately when you make a change, then pushed to the cloud. When you open the app or switch tabs it pulls the latest from the cloud.<br><br>
+          <strong style="color:var(--text);">No internet?</strong> — The app works offline. Changes save locally and sync automatically once you're back online.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
