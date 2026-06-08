@@ -1680,7 +1680,7 @@ function drawTeams(){
   });
 
   // Collect all combos within 1 point of the best diff (to allow variety)
-  const threshold=Math.max(bestDiff,1);
+  const threshold=Math.max(bestDiff,4);
   const goodCombos=combos.filter(aIds=>{
     const aEff=aIds.reduce((s,id)=>s+effMap[id],0);
     return Math.abs(aEff-(totalEff-aEff))<=threshold;
