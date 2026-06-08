@@ -1257,6 +1257,7 @@ function setTeamThreshold(val){
   refreshTeamsOpenBtn();
 }
 function setTeamsOpen(on){
+  if(!isAdmin()){showAdminPrompt();return;}
   localStorage.setItem(K.teamsOpen,JSON.stringify(on));
   schedulePush();
   refreshTeamsOpenBtn();
