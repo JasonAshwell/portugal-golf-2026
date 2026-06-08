@@ -597,6 +597,14 @@
           <button class="btn btn-sm btn-ghost body-admin-only" id="teams-open-btn" onclick="setTeamsOpen(!isTeamsOpen())" style="font-size:.75rem;"></button>
         </div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="font-size:.72rem;color:var(--muted);">Balance tolerance:</span>
+        <button id="threshold-minus" class="btn btn-ghost btn-sm" style="padding:2px 10px;font-size:.9rem;line-height:1;" onclick="setTeamThreshold(getTeamThreshold()-1);refreshTeamsOpenBtn()">−</button>
+        <span id="team-threshold-val" style="font-size:.85rem;font-weight:800;min-width:18px;text-align:center;">4</span>
+        <span style="font-size:.72rem;color:var(--muted);">shots</span>
+        <button id="threshold-plus" class="btn btn-ghost btn-sm" style="padding:2px 10px;font-size:.9rem;line-height:1;" onclick="setTeamThreshold(getTeamThreshold()+1);refreshTeamsOpenBtn()">+</button>
+        <span style="font-size:.68rem;color:var(--muted);font-style:italic;">Higher = more variety, less balance</span>
+      </div>
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">Teams stay the same all 4 days. Balanced by effective handicap. Use dropdowns to reassign players. Hit <strong style="color:var(--text)">Generate Pairings</strong> to auto-create daily pairings after setting teams.</p>
       <div style="display:flex;gap:10px;margin-bottom:16px;">
         <div style="flex:1;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);border-radius:10px;padding:10px 13px;">
@@ -971,7 +979,8 @@ const K = {
   aikey:    'amd_aikey_v1',
   aitoken:  'amd_aitoken_v1',
   revealed:   'amd_revealed_v1',
-  teamsOpen:  'amd_teams_open_v1',
+  teamsOpen:      'amd_teams_open_v1',
+  teamThreshold:  'amd_team_threshold_v1',
 };
 
 const DEFAULT_LOGISTICS = [
@@ -1238,6 +1247,14 @@ function getTeams(){return ls(K.teams,null);}
 function saveTeams(t){lss(K.teams,t);}
 function saveTeamsForce(t){localStorage.setItem(K.teams,JSON.stringify(t));schedulePush();}
 function isTeamsOpen(){return!!ls(K.teamsOpen,false);}
+function getTeamThreshold(){return ls(K.teamThreshold,4);}
+function setTeamThreshold(val){
+  if(!isAdmin()&&!isTeamsOpen()){showAdminPrompt();return;}
+  const v=Math.max(0,Math.min(20,parseInt(val)||0));
+  localStorage.setItem(K.teamThreshold,JSON.stringify(v));
+  schedulePush();
+  refreshTeamsOpenBtn();
+}
 function setTeamsOpen(on){
   localStorage.setItem(K.teamsOpen,JSON.stringify(on));
   schedulePush();
@@ -1247,11 +1264,19 @@ function setTeamsOpen(on){
 }
 function refreshTeamsOpenBtn(){
   const btn=document.getElementById('teams-open-btn');
-  if(!btn)return;
-  const open=isTeamsOpen();
-  btn.textContent=open?'🔒 Lock Redraw':'🔓 Unlock Redraw for All';
-  btn.style.color=open?'var(--red)':'var(--accent)';
-  btn.style.borderColor=open?'var(--red)':'var(--accent)';
+  if(btn){
+    const open=isTeamsOpen();
+    btn.textContent=open?'🔒 Lock Redraw':'🔓 Unlock Redraw for All';
+    btn.style.color=open?'var(--red)':'var(--accent)';
+    btn.style.borderColor=open?'var(--red)':'var(--accent)';
+  }
+  const tEl=document.getElementById('team-threshold-val');
+  if(tEl)tEl.textContent=getTeamThreshold();
+  const canEdit=isAdmin()||isTeamsOpen();
+  ['threshold-minus','threshold-plus'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b){b.disabled=!canEdit;b.style.opacity=canEdit?'1':'0.4';}
+  });
 }
 
 function getTeamNames(){return ls(K.teamnames,{A:'Team A',B:'Team B'});}
@@ -1699,7 +1724,7 @@ function drawTeams(){
   });
 
   // Collect all combos within 1 point of the best diff (to allow variety)
-  const threshold=Math.max(bestDiff,4);
+  const threshold=Math.max(bestDiff,getTeamThreshold());
   const goodCombos=combos.filter(aIds=>{
     const aEff=aIds.reduce((s,id)=>s+effMap[id],0);
     return Math.abs(aEff-(totalEff-aEff))<=threshold;
