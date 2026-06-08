@@ -1720,7 +1720,8 @@ function drawTeams(){
   if(isAdmin())saveTeams({A,B}); else saveTeamsForce({A,B});
   renderTeams();
   generateAllPairings();
-  toast(`Teams re-drawn &amp; pairings updated! 🔀 (${goodCombos.length} balanced combos available)`);
+  const uniqueSplits=Math.round(goodCombos.length/2);
+  toast(`Teams re-drawn &amp; pairings updated! 🔀 (${uniqueSplits} unique balanced split${uniqueSplits!==1?'s':''} available)`);
 }
 
 function renderTeams(){
