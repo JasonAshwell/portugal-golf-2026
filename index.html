@@ -3615,6 +3615,7 @@ function showWorkerSetup(){
 }
 
 async function generateDaySummary(n){
+  if(!isAdmin()){showAdminPrompt();return;}
   const workerUrl=getWorkerUrl();
   const workerToken=getWorkerToken();
 
