@@ -1700,7 +1700,8 @@ function drawTeams(){
 
   saveTeams({A,B});
   renderTeams();
-  toast(`Teams re-drawn! 🔀 (${goodCombos.length} balanced combo${goodCombos.length!==1?'s':''} available)`);
+  generateAllPairings();
+  toast(`Teams re-drawn &amp; pairings updated! 🔀 (${goodCombos.length} balanced combos available)`);
 }
 
 function renderTeams(){
@@ -2962,22 +2963,37 @@ function renderDailyWinnersSummary(){
       [0,1,2,3].forEach(i=>{
         if(dayData['pair'+i+'score'])entries.push([`Pair ${i+1} score`,dayData['pair'+i+'score']+' pts']);
       });
+    } else if(n===4){
+      // Day 4 individual
+      if(dayData.best_individual)entries.push(['🥇 Best Individual (€10)',playerLabel(dayData.best_individual)]);
+      if(dayData.second_individual)entries.push(['🥈 2nd Individual (€5)',playerLabel(dayData.second_individual)]);
+      [0,1,2,3].forEach(i=>{
+        const v=dayData['m'+i];
+        if(v&&pairs&&pairs[i]){
+          const ids=pairs[i];
+          const p0=pMap[ids[0]],p1=pMap[ids[1]];
+          if(p0&&p1)entries.push([`⚔️ Match ${i+1} (${p0.name} vs ${p1.name})`,playerLabel(v)]);
+        }
+      });
     } else {
-      // 4BBB
+      // 4BBB (Days 1 & 2)
+      if(dayData.best_pair)entries.push(['🥇 Best Pair (€20 total)',pairLabel(dayData.best_pair)]);
+      if(dayData.second_pair)entries.push(['🥈 2nd Pair (€10 total)',pairLabel(dayData.second_pair)]);
       [1,2].forEach(g=>{
-        if(dayData[`g${g}match`])entries.push([`Group ${g} Match`,pairLabel(dayData[`g${g}match`])]);
-        if(dayData[`g${g}f9`])entries.push([`Group ${g} Front 9`,pairLabel(dayData[`g${g}f9`])]);
-        if(dayData[`g${g}b9`])entries.push([`Group ${g} Back 9`,pairLabel(dayData[`g${g}b9`])]);
+        if(dayData[`g${g}match`])entries.push([`Group ${g} Match Result`,pairLabel(dayData[`g${g}match`])]);
       });
     }
     // NPs
     if(cfg.isScramble){
-      [1,2,3,4].forEach(i=>{const v=dayData['np'+i];if(v)entries.push([`📍 NP ${i}`,playerLabel(v)]);});
-      if(dayData.np18)entries.push(['📍 NP in Reg — Hole 18',playerLabel(dayData.np18)]);
-    } else if(n===2){
-      [1,2,3,4].forEach(i=>{const v=dayData['np'+i];if(v)entries.push([`📍 NP ${i}`,playerLabel(v)]);});
+      [1,2,3,4].forEach(i=>{const v=dayData['np'+i];if(v)entries.push([`📍 NP ${i} (€1)`,playerLabel(v)]);});
+      if(dayData.np18)entries.push(['📍 NP Hole 18 (€1)',playerLabel(dayData.np18)]);
+    } else if(n===4){
+      [1,2].forEach(g=>[1,2].forEach(i=>{const v=dayData[`g${g}np${i}`];if(v)entries.push([`📍 Group ${g} NP ${i} (€2)`,playerLabel(v)]);}));
+      if(dayData.np18)entries.push(['📍 NP Hole 18 (€2)',playerLabel(dayData.np18)]);
     } else {
-      [1,2].forEach(g=>[1,2,3,4].forEach(i=>{const v=dayData[`g${g}np${i}`];if(v)entries.push([`📍 Group ${g} NP ${i}`,playerLabel(v)]);}));
+      // Days 1 & 2
+      [1,2].forEach(g=>[1,2].forEach(i=>{const v=dayData[`g${g}np${i}`];if(v)entries.push([`📍 Group ${g} NP ${i} (€2)`,playerLabel(v)]);}));
+      if(dayData.np18)entries.push(['📍 NP Hole 18 (€2)',playerLabel(dayData.np18)]);
     }
 
     if(entries.length){
