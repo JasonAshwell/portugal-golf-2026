@@ -3425,6 +3425,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 // ═══════════════════════════════════════════════════
 // AI DAY SUMMARIES
 // ═══════════════════════════════════════════════════
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 function getSummaries(){return ls(K.summaries,{});}
 function saveSummary(n,text){const s=getSummaries();s[n]=text;lss(K.summaries,s);}
 function getWorkerUrl(){return ls(K.aikey,'');}
@@ -3684,8 +3687,8 @@ async function generateDaySummary(n){
     if(data.error)throw new Error(data.error);
     const text=data.text||'No summary generated.';
     saveSummary(n,text);
-    if(body)body.innerHTML=`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;color:var(--text);">${text}</p>`;
-    if(btn){btn.disabled=false;btn.textContent='🔄 Regenerate';}
+    if(body)body.innerHTML=`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;color:var(--text);">${escapeHtml(text)}</p>`;
+    if(btn){btn.disabled=false;btn.textContent=preTour?'🔄 Regenerate Pre-Tour':'🔄 Regenerate';}
   }catch(e){
     console.error('AI summary error:',e);
     if(body)body.innerHTML=`<p style="font-size:.82rem;color:var(--red);">❌ ${e.message}<br><span style="font-size:.75rem;color:var(--muted);">URL: ${workerUrl||'(none)'}<br>Tap ⚙ to reconfigure.</span></p>`;
@@ -3738,7 +3741,7 @@ function buildAiSummaryCard(n){
     ? `<p style="font-size:.82rem;color:var(--muted);">No scores yet — hit Generate for a humorous pre-tour player preview based on ratings &amp; reputations!</p>`
     : `<p style="font-size:.82rem;color:var(--muted);">Hit Generate to get an AI-written humorous take on the day.</p>`;
   const content=existing
-    ?`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;color:var(--text);">${existing}</p>`
+    ?`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;color:var(--text);">${escapeHtml(existing)}</p>`
     :placeholder;
   return`<div class="card" id="ai-summary-card-${n}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
