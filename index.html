@@ -3504,6 +3504,7 @@ function buildAiContext(n){
   const allScores=getScores();
   const teams=getTeams();
   const names=getTeamNames();
+  const allRatings=getAllRatings();
   const cfg=DAY_CONFIG[n];
 
   let ctx=`PORTUGAL GOLF TRIP 2026 — ${cfg.dayName} (${cfg.title}: ${cfg.course})\n`;
@@ -3515,6 +3516,31 @@ function buildAiContext(n){
     ['A','B'].forEach(t=>{
       const tPlayers=(teams[t]||[]).map(id=>pMap[id]?pMap[id].name:'?').join(', ');
       ctx+=`  ${names[t]||'Team '+t}: ${tPlayers}\n`;
+    });
+    ctx+='\n';
+  }
+
+  // Player profiles (bios + ratings) — give the AI personality hooks for each player
+  const hasAnyProfile=players.some(p=>{
+    const entry=allRatings[p.id]||{};
+    return p.bio||(Array.isArray(entry._cats)&&entry._cats.length>0);
+  });
+  if(hasAnyProfile){
+    ctx+=`PLAYER PROFILES:\n`;
+    players.forEach(p=>{
+      const entry=allRatings[p.id]||{};
+      const cats=Array.isArray(entry._cats)?entry._cats:[];
+      ctx+=`  ${p.name} (HCP ${p.hcp})`;
+      if(cats.length>0){
+        const ratingStrs=cats.map(cat=>{
+          const v=entry[cat]??0;
+          const stars='⭐'.repeat(Math.round(v/2));
+          return`${cat}: ${stars||v+'/10'}`;
+        });
+        ctx+=` — Ratings: ${ratingStrs.join(', ')}`;
+      }
+      if(p.bio)ctx+=`\n    About: ${p.bio}`;
+      ctx+='\n';
     });
     ctx+='\n';
   }
@@ -3712,7 +3738,7 @@ function buildAiSummaryCard(n){
     ? `<p style="font-size:.82rem;color:var(--muted);">No scores yet — hit Generate for a humorous pre-tour player preview based on ratings &amp; reputations!</p>`
     : `<p style="font-size:.82rem;color:var(--muted);">Hit Generate to get an AI-written humorous take on the day.</p>`;
   const content=existing
-    ?`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;color:var(--text);">${existing}</p>`
+    ?`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;color:var(--text);">${existing}</p>`
     :placeholder;
   return`<div class="card" id="ai-summary-card-${n}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
