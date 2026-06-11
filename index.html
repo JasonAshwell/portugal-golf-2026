@@ -3430,6 +3430,16 @@ function escapeHtml(str){
 }
 function getSummaries(){return ls(K.summaries,{});}
 function saveSummary(n,text){const s=getSummaries();s[n]=text;lss(K.summaries,s);}
+function clearSummary(n){
+  if(!isAdmin()){showAdminPrompt();return;}
+  const s=getSummaries();
+  delete s[n];
+  localStorage.setItem(K.summaries,JSON.stringify(s));
+  schedulePush();
+  const card=document.getElementById(`ai-summary-card-${n}`);
+  if(card){const ph=isPreTourMode(n)?`<p style="font-size:.82rem;color:var(--muted);">No scores yet — hit Generate for a humorous pre-tour player preview based on ratings &amp; reputations!</p>`:`<p style="font-size:.82rem;color:var(--muted);">Hit Generate to get an AI-written humorous take on the day.</p>`;document.getElementById(`ai-summary-body-${n}`).innerHTML=ph;const btn=document.getElementById(`ai-summary-btn-${n}`);if(btn)btn.textContent=isPreTourMode(n)?'🎙 Generate Pre-Tour Preview':'✨ Generate Summary';const delBtn=document.getElementById(`ai-summary-del-${n}`);if(delBtn)delBtn.style.display='none';}
+  toast('Summary cleared');
+}
 function getWorkerUrl(){return ls(K.aikey,'');}
 function getWorkerToken(){return ls(K.aitoken,'');}
 function saveWorkerConfig(url,token){
@@ -3689,6 +3699,8 @@ async function generateDaySummary(n){
     saveSummary(n,text);
     if(body)body.innerHTML=`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;color:var(--text);">${escapeHtml(text)}</p>`;
     if(btn){btn.disabled=false;btn.textContent=preTour?'🔄 Regenerate Pre-Tour':'🔄 Regenerate';}
+    const delBtn=document.getElementById(`ai-summary-del-${n}`);
+    if(delBtn&&isAdmin())delBtn.style.display='';
   }catch(e){
     console.error('AI summary error:',e);
     if(body)body.innerHTML=`<p style="font-size:.82rem;color:var(--red);">❌ ${e.message}<br><span style="font-size:.75rem;color:var(--muted);">URL: ${workerUrl||'(none)'}<br>Tap ⚙ to reconfigure.</span></p>`;
@@ -3743,13 +3755,17 @@ function buildAiSummaryCard(n){
   const content=existing
     ?`<p style="font-size:.85rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;color:var(--text);">${escapeHtml(existing)}</p>`
     :placeholder;
+  const showDel=existing&&isAdmin();
   return`<div class="card" id="ai-summary-card-${n}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="card-label" style="margin-bottom:0;">${preTour?'🎙 Pre-Tour Preview':'🤣 Day Summary'}</div>
         <button class="btn btn-sm" style="font-size:.65rem;padding:2px 7px;opacity:.6;" onclick="showWorkerSetup()" title="Configure AI settings">⚙</button>
       </div>
-      <button class="btn btn-sm" id="ai-summary-btn-${n}" onclick="generateDaySummary(${n})">${btnLabel}</button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="ai-summary-del-${n}" class="btn btn-sm btn-red" style="font-size:.65rem;padding:2px 7px;${showDel?'':'display:none;'}" onclick="clearSummary(${n})" title="Clear summary">🗑</button>
+        <button class="btn btn-sm" id="ai-summary-btn-${n}" onclick="generateDaySummary(${n})">${btnLabel}</button>
+      </div>
     </div>
     <div id="ai-summary-body-${n}">${content}</div>
   </div>`;
