@@ -501,7 +501,7 @@
       <div class="card-label">🏆 Tour Championship</div>
       <p style="font-size:.87rem;color:var(--muted);line-height:1.65;">Most combined Stableford points over <strong style="color:var(--text)">3 rounds</strong> (Days 1, 2 &amp; 4). €10 entry per player — <strong style="color:var(--text)">€80 total pot</strong> (8 players).</p>
       <div style="margin-top:11px;display:flex;flex-wrap:wrap;">
-        <span class="tag tag-gold">🥇 1st — €40</span>
+        <span class="tag tag-gold">🥇 1st — €50</span>
         <span class="tag tag-gold">🥈 2nd — €20</span>
         <span class="tag tag-gold">🥉 3rd — €10</span>
         <span class="tag tag-gold">4️⃣ 4th — €5</span>
@@ -738,13 +738,13 @@
         Day 2 (4BBB): Best pair <strong style="color:var(--text)">€20 (€10 each)</strong> · 2nd pair <strong style="color:var(--text)">€10 (€5 each)</strong> · 4×NP <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
         Day 3 (Scramble): 1st <strong style="color:var(--text)">€20 (€10 each)</strong> · 2nd <strong style="color:var(--text)">€10 (€5 each)</strong> · 4×NP <strong style="color:var(--text)">€2 each</strong> ·
         Day 4: Best individual <strong style="color:var(--text)">€10</strong> · 2nd <strong style="color:var(--text)">€5</strong> · 4×NP <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
-        TC (8 players): <strong style="color:var(--text)">€40 / €20 / €10 / €5</strong> · Lowest <strong style="color:var(--text)">€7</strong>
+        TC (8 players): <strong style="color:var(--text)">€50 / €20 / €10 / €5</strong> · Lowest <strong style="color:var(--text)">€7</strong>
       </p>
     </div>
 
     <div class="card">
       <div class="card-label">🏆 Tour Championship — €80 Pot <span style="font-size:.7rem;font-weight:400;color:var(--muted);">(8 players)</span></div>
-      <div class="prize-row"><div class="prize-pos">🥇</div><div class="prize-who" id="p1st">TBD</div><div class="prize-amt">€40</div></div>
+      <div class="prize-row"><div class="prize-pos">🥇</div><div class="prize-who" id="p1st">TBD</div><div class="prize-amt">€50</div></div>
       <div class="prize-row"><div class="prize-pos">🥈</div><div class="prize-who" id="p2nd">TBD</div><div class="prize-amt">€20</div></div>
       <div class="prize-row"><div class="prize-pos">🥉</div><div class="prize-who" id="p3rd">TBD</div><div class="prize-amt">€10</div></div>
       <div class="prize-row"><div class="prize-pos">4️⃣</div><div class="prize-who" id="p4th">TBD</div><div class="prize-amt">€5</div></div>
@@ -758,11 +758,7 @@
       <div class="card-label">📅 Prize Pool Summary</div>
       <div class="bet-row"><span>Tour Championship (8 × €10)</span><span class="bet-amt">€80</span></div>
       <div class="bet-row"><span>Team pot (8 × €20)</span><span class="bet-amt">€160</span></div>
-      <div class="bet-row"><span>Day 1 daily pot</span><span class="bet-amt">€45</span></div>
-      <div class="bet-row"><span>Day 2 daily pot</span><span class="bet-amt">€40</span></div>
-      <div class="bet-row"><span>Day 3 (Scramble) daily pot</span><span class="bet-amt">€38</span></div>
-      <div class="bet-row"><span>Day 4 daily pot</span><span class="bet-amt">€25</span></div>
-      <div class="bet-row" style="font-weight:700;color:var(--text);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span>Total prize money</span><span class="bet-amt">€388</span></div>
+      <div class="bet-row" style="font-weight:700;color:var(--text);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span>Total prize money</span><span class="bet-amt">€240</span></div>
     </div>
   </div>
 
@@ -2522,9 +2518,10 @@ function buildNPSection(players,n,pairings){
     html+=`<div class="result-section-title">📍 Nearest the Pin (€2 each — open to all)</div>`;
     [1,2].forEach(g=>{
       [1,2].forEach(i=>{
+        const extraOpts=(n===2&&g===1&&i===1)?`<option value="share_mjluke">MJ &amp; Luke (€1 each)</option>`:'';
         html+=`<div class="result-row">
           <span class="result-label">NP ${(g-1)*2+i}</span>
-          <select class="result-select" id="res-${n}-g${g}np${i}" onchange="saveDayResult(${n},'g${g}np${i}',this.value)">${opts(null)}</select>
+          <select class="result-select" id="res-${n}-g${g}np${i}" onchange="saveDayResult(${n},'g${g}np${i}',this.value)">${opts(null)}${extraOpts}</select>
         </div>`;
       });
     });
@@ -2919,14 +2916,22 @@ function calculateWinnings(){
       [1,2,3,4].forEach(i=>addPlayer(dayData['np'+i],n,2));
     } else {
       // Days 1, 2, 4: 2 NPs per group at €2 each + NP18 at €2
-      [1,2].forEach(g=>[1,2].forEach(i=>addPlayer(dayData[`g${g}np${i}`],n,2)));
+      [1,2].forEach(g=>[1,2].forEach(i=>{
+        const val=dayData[`g${g}np${i}`];
+        if(val==='share_mjluke'){
+          addPlayer('1',n,1); // MJ €1
+          addPlayer('5',n,1); // Luke €1
+        } else {
+          addPlayer(val,n,2);
+        }
+      }));
       addPlayer(dayData['np18'],n,2);
     }
   });
 
   // Tour Championship prizes — only eligible (non-opt-out) players
   const standings=getStandings();
-  const tcPrizes=[40,20,10,5];
+  const tcPrizes=[50,20,10,5];
   standings.slice(0,4).forEach((p,i)=>{
     if(p.total>0&&w[p.id]!==undefined)w[p.id].tc=tcPrizes[i];
   });
