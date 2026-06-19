@@ -932,8 +932,8 @@ const DAY_CONFIG = {
   5: {
     title:'Day 5', emoji:'🎉', course:"O'Connor Jnr. Course", dayName:'Thursday', teeTime:'10:00am',
     courseDesc:"Par 72 · Christy O'Connor Jnr. Course · Fun Day",
-    format:'TBD', tcDay:false, matchPlay:false, funDay:true, color:'var(--muted)',
-    formatHow:'Format yet to be decided — watch this space! Not everyone may play. No Tour Championship points today.',
+    format:'Team Scramble (Off Scratch)', tcDay:false, matchPlay:false, funDay:true, color:'var(--muted)',
+    formatHow:'Two teams of 3 & 4 compete in a scramble off scratch — best shot selected each time. No handicaps, no Tour Championship points, just bragging rights!',
     courseUrl:'https://www.amendoeiraresort.com/en/golf/',
     scorecardUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnor/Oconnor_Jnr._Scorecard.pdf',
     slopeUrl:'https://amendoeira.backhotelite.com/uploads/files/cms_apps/pdf/oconnorslop/OConnor_Jnr_Course_Slope_Rating.pdf',
@@ -2033,32 +2033,34 @@ function renderDay(n){
   if(cfg.funDay){
     html+=`<div class="card">
       <div class="card-label">🏌️ Day 5 — Team Scramble (Off Scratch)</div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">O'Connor Jnr. Course · Par 72 · Thursday · No handicaps, no Tour Championship points — just bragging rights.</p>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="background:var(--bg3);border:2px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-          <div>
-            <div style="font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">🏆 Winners</div>
-            <div style="font-weight:700;font-size:.95rem;">MJ, Luke &amp; Rob</div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Team 1</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:2rem;font-weight:900;color:var(--accent);">−5</div>
-            <div style="font-size:.72rem;color:var(--muted);">67 gross</div>
-          </div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">O'Connor Jnr. Course · Par 72 · Thursday · No handicaps · No TC points · Bragging rights only</p>
+
+      <!-- VS layout -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:16px;">
+
+        <!-- Team 1 -->
+        <div style="background:var(--bg3);border:2px solid var(--accent);border-radius:12px;padding:14px 12px;text-align:center;">
+          <div style="font-size:.6rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;">🏆 Team 1 — Winners</div>
+          <div style="font-size:.88rem;font-weight:700;line-height:1.5;">MJ<br>Luke<br>Rob</div>
+          <div style="margin-top:10px;font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1;">−5</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:2px;">67 gross</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-          <div>
-            <div style="font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Runners Up</div>
-            <div style="font-weight:700;font-size:.95rem;">Jason, Nick, Chris &amp; Mike</div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Team 2</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:2rem;font-weight:900;color:var(--muted);">−3</div>
-            <div style="font-size:.72rem;color:var(--muted);">69 gross</div>
-          </div>
+
+        <!-- VS -->
+        <div style="font-size:.85rem;font-weight:900;color:var(--muted);text-align:center;">VS</div>
+
+        <!-- Team 2 -->
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center;">
+          <div style="font-size:.6rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Team 2</div>
+          <div style="font-size:.88rem;font-weight:700;line-height:1.5;">Jason<br>Nick<br>Chris<br>Mike</div>
+          <div style="margin-top:10px;font-size:2.2rem;font-weight:900;color:var(--muted);line-height:1;">−3</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:2px;">69 gross</div>
         </div>
       </div>
-      <p style="font-size:.78rem;color:var(--muted);margin-top:14px;text-align:center;">Team 1 won by <strong style="color:var(--text)">2 shots</strong></p>
+
+      <div style="text-align:center;font-size:.82rem;color:var(--muted);padding:10px;background:var(--bg3);border-radius:8px;">
+        Team 1 won by <strong style="color:var(--accent);">2 shots</strong>
+      </div>
     </div>`;
     container.innerHTML=html;
     return;
