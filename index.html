@@ -504,7 +504,7 @@
         <span class="tag tag-gold">🥇 1st — €50</span>
         <span class="tag tag-gold">🥈 2nd — €20</span>
         <span class="tag tag-gold">🥉 3rd — €10</span>
-        <span class="tag tag-gold">4️⃣ 4th — €5</span>
+        <span class="tag tag-gold">4️⃣ 4th — €7</span>
         <span class="tag tag-gold">🔻 Lowest — €7</span>
       </div>
     </div>
@@ -738,7 +738,7 @@
         Day 2 (4BBB): Best pair <strong style="color:var(--text)">€20 (€10 each)</strong> · 2nd pair <strong style="color:var(--text)">€10 (€5 each)</strong> · 4×NP <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
         Day 3 (Scramble): 1st <strong style="color:var(--text)">€20 (€10 each)</strong> · 2nd <strong style="color:var(--text)">€10 (€5 each)</strong> · 4×NP <strong style="color:var(--text)">€2 each</strong> ·
         Day 4: Best individual <strong style="color:var(--text)">€10</strong> · 2nd <strong style="color:var(--text)">€5</strong> · 4×NP <strong style="color:var(--text)">€2 each</strong> · NP18 <strong style="color:var(--text)">€2</strong> ·
-        TC (8 players): <strong style="color:var(--text)">€50 / €20 / €10 / €5</strong> · Lowest <strong style="color:var(--text)">€7</strong>
+        TC (8 players): <strong style="color:var(--text)">€50 / €20 / €10 / €7</strong> · Lowest <strong style="color:var(--text)">€7</strong>
       </p>
     </div>
 
@@ -747,7 +747,7 @@
       <div class="prize-row"><div class="prize-pos">🥇</div><div class="prize-who" id="p1st">TBD</div><div class="prize-amt">€50</div></div>
       <div class="prize-row"><div class="prize-pos">🥈</div><div class="prize-who" id="p2nd">TBD</div><div class="prize-amt">€20</div></div>
       <div class="prize-row"><div class="prize-pos">🥉</div><div class="prize-who" id="p3rd">TBD</div><div class="prize-amt">€10</div></div>
-      <div class="prize-row"><div class="prize-pos">4️⃣</div><div class="prize-who" id="p4th">TBD</div><div class="prize-amt">€5</div></div>
+      <div class="prize-row"><div class="prize-pos">4️⃣</div><div class="prize-who" id="p4th">TBD</div><div class="prize-amt">€7</div></div>
       <div class="prize-row"><div class="prize-pos">🔻</div><div class="prize-who" id="plowest">TBD</div><div class="prize-amt">€7 <span style="font-size:.72rem;font-weight:400;color:var(--muted);">lowest score</span></div></div>
     </div>
     <div class="card" id="daily-winners-card">
@@ -756,8 +756,11 @@
     </div>
     <div class="card">
       <div class="card-label">📅 Prize Pool Summary</div>
-      <div class="bet-row"><span>Tour Championship (8 × €10)</span><span class="bet-amt">€80</span></div>
-      <div class="bet-row"><span>Team pot (8 × €20)</span><span class="bet-amt">€160</span></div>
+      <div class="bet-row"><span>TC prizes (€50 · €20 · €10 · €7 · €7)</span><span class="bet-amt">€94</span></div>
+      <div class="bet-row"><span>Day 1 prizes</span><span class="bet-amt">€45</span></div>
+      <div class="bet-row"><span>Day 2 prizes</span><span class="bet-amt">€40</span></div>
+      <div class="bet-row"><span>Day 3 prizes</span><span class="bet-amt">€38</span></div>
+      <div class="bet-row"><span>Day 4 prizes (NP 1 not won)</span><span class="bet-amt">€23</span></div>
       <div class="bet-row" style="font-weight:700;color:var(--text);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span>Total prize money</span><span class="bet-amt">€240</span></div>
     </div>
   </div>
@@ -2931,7 +2934,7 @@ function calculateWinnings(){
 
   // Tour Championship prizes — only eligible (non-opt-out) players
   const standings=getStandings();
-  const tcPrizes=[50,20,10,5];
+  const tcPrizes=[50,20,10,7];
   standings.slice(0,4).forEach((p,i)=>{
     if(p.total>0&&w[p.id]!==undefined)w[p.id].tc=tcPrizes[i];
   });
