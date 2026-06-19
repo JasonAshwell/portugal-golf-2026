@@ -2031,18 +2031,34 @@ function renderDay(n){
 
   // Fun day placeholder — no pairings, results or scores yet
   if(cfg.funDay){
-    html+=`<div class="card" style="text-align:center;padding:32px 20px;">
-      <div style="font-size:2.4rem;margin-bottom:12px;">🎉</div>
-      <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">Fun Day — Format TBD</div>
-      <div style="font-size:.85rem;color:var(--muted);max-width:360px;margin:0 auto 20px;">
-        The format for Thursday hasn't been decided yet. Not everyone may play.
-        Check back closer to the trip for updates!
+    html+=`<div class="card">
+      <div class="card-label">🏌️ Day 5 — Team Scramble (Off Scratch)</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">O'Connor Jnr. Course · Par 72 · Thursday · No handicaps, no Tour Championship points — just bragging rights.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--bg3);border:2px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">🏆 Winners</div>
+            <div style="font-weight:700;font-size:.95rem;">MJ, Luke &amp; Rob</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Team 1</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:2rem;font-weight:900;color:var(--accent);">−5</div>
+            <div style="font-size:.72rem;color:var(--muted);">67 gross</div>
+          </div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Runners Up</div>
+            <div style="font-weight:700;font-size:.95rem;">Jason, Nick, Chris &amp; Mike</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Team 2</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:2rem;font-weight:900;color:var(--muted);">−3</div>
+            <div style="font-size:.72rem;color:var(--muted);">69 gross</div>
+          </div>
+        </div>
       </div>
-      <div style="display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-        <span class="tag tag-blue">O'Connor 10</span>
-        <span class="tag" style="background:var(--bg3);color:var(--muted);">No Tour Championship points</span>
-        <span class="tag" style="background:var(--bg3);color:var(--muted);">Optional</span>
-      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:14px;text-align:center;">Team 1 won by <strong style="color:var(--text)">2 shots</strong></p>
     </div>`;
     container.innerHTML=html;
     return;
@@ -2989,7 +3005,7 @@ function renderWinningsTable(){
   const tD4=rows.reduce((s,p)=>s+p.d4,0);
   const tTc=rows.reduce((s,p)=>s+p.tc,0);
   const tAll=tD1+tD2+tD3+tD4+tTc;
-  const avail={d1:40,d2:40,d3:35,d4:25,tc:70,all:210};
+  const avail={d1:45,d2:40,d3:38,d4:23,tc:94,all:240};
   function fmtTotal(won,max){
     const wonStr=won>0?`<strong style="color:${won>=max?'var(--accent)':'var(--text)'};">€${won%1===0?won.toFixed(0):won.toFixed(2)}</strong>`:`<span style="color:var(--muted);font-size:.8rem;">€0</span>`;
     const maxStr=`<span style="color:var(--muted);font-size:.7rem;"> / €${max}</span>`;
